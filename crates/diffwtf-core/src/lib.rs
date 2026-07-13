@@ -1,5 +1,9 @@
 //! Pure diff engine for diff.wtf. The public types below are the product contract
 //! (see `docs/scaffold-spec.md`); changing them is a spec change.
+//!
+// The README doubles as the docs.rs front page, and including it here compiles
+// its usage examples as doctests, so the published snippets can't rot.
+#![doc = include_str!("../README.md")]
 
 mod intraline;
 mod lcs;
@@ -70,6 +74,28 @@ pub struct UnifiedRow {
     pub segments: Vec<Segment>,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
+pub enum LineOpKind {
+    Equal,
+    Delete,
+    Insert,
+}
+
+/// One raw line-level operation from [`diff_lines`]: the line's text plus
+/// 1-based line numbers on each side. `old_number` is `None` on inserted
+/// lines, `new_number` is `None` on deleted lines, and both are `Some` on
+/// equal lines.
+#[derive(Clone, PartialEq, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+pub struct LineOp {
+    pub kind: LineOpKind,
+    pub text: String,
+    pub old_number: Option<u32>,
+    pub new_number: Option<u32>,
+}
+
 #[derive(Clone, PartialEq, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct DiffResult {
@@ -98,7 +124,55 @@ fn to_u32(n: usize) -> u32 {
     u32::try_from(n).unwrap_or(u32::MAX)
 }
 
-/// The one entry point.
+/// Raw line-level diff: the Myers ops with no intra-line refinement and no
+/// view assembly, for library consumers who just want the ops.
+///
+/// Guarantees:
+///
+/// - Reconstructability, for every input: concatenating the `text` of Equal
+///   and Delete ops (joined with `"\n"`) equals `left`, and Equal plus Insert
+///   equals `right`.
+/// - Within a changed hunk, all Delete ops precede all Insert ops.
+/// - Op counts match [`diff`]: Delete ops = `removed`, Insert ops = `added`,
+///   with one documented exception. [`diff`] treats two inputs that are both
+///   empty after trimming as the UI empty state and reports zero counts;
+///   `diff_lines` has no UI and stays raw, so whitespace-only inputs produce
+///   real ops (e.g. `" "` vs `"\t"` is one Delete plus one Insert).
+///
+/// Inputs are split on `'\n'`; `'\r'` is line content (the engine-wide v1
+/// policy). Like [`diff`], a depth-capped pathological case degrades to a
+/// non-minimal but still reconstructable diff (see `src/myers.rs`).
+pub fn diff_lines(left: &str, right: &str) -> Vec<LineOp> {
+    let left_lines: Vec<&str> = left.split('\n').collect();
+    let right_lines: Vec<&str> = right.split('\n').collect();
+    let (mut ln, mut rn) = (1u32, 1u32);
+    myers::diff_slices(&left_lines, &right_lines)
+        .into_iter()
+        .map(|(op, text)| {
+            let (kind, old_number, new_number) = match op {
+                Op::Eq => (LineOpKind::Equal, Some(ln), Some(rn)),
+                Op::Del => (LineOpKind::Delete, Some(ln), None),
+                Op::Ins => (LineOpKind::Insert, None, Some(rn)),
+            };
+            if old_number.is_some() {
+                ln = ln.saturating_add(1);
+            }
+            if new_number.is_some() {
+                rn = rn.saturating_add(1);
+            }
+            LineOp {
+                kind,
+                text: text.to_string(),
+                old_number,
+                new_number,
+            }
+        })
+        .collect()
+}
+
+/// The main entry point: the full result with hunk pairing, intra-line
+/// refinement, and both assembled views. For raw line ops only, see
+/// [`diff_lines`].
 pub fn diff(left: &str, right: &str, granularity: Granularity) -> DiffResult {
     if left.trim().is_empty() && right.trim().is_empty() {
         return DiffResult::default();
@@ -260,6 +334,51 @@ mod tests {
         assert!(result.rows.iter().all(|r| r.kind == RowKind::Equal));
         // Empty line renders as the true empty segment list, not a ' ' placeholder.
         assert!(result.rows[1].left.as_ref().unwrap().segments.is_empty());
+    }
+
+    #[test]
+    fn diff_lines_emits_raw_ops_with_line_numbers() {
+        let ops = diff_lines("a\nb\nc", "a\nx\nc");
+        let expect = [
+            (LineOpKind::Equal, "a", Some(1), Some(1)),
+            (LineOpKind::Delete, "b", Some(2), None),
+            (LineOpKind::Insert, "x", None, Some(2)),
+            (LineOpKind::Equal, "c", Some(3), Some(3)),
+        ];
+        assert_eq!(ops.len(), expect.len());
+        for (op, (kind, text, old, new)) in ops.iter().zip(expect) {
+            assert_eq!((op.kind, op.text.as_str()), (kind, text));
+            assert_eq!((op.old_number, op.new_number), (old, new));
+        }
+    }
+
+    #[test]
+    fn diff_lines_orders_deletes_before_inserts_within_a_hunk() {
+        let ops = diff_lines("a\nb\nc", "x\ny\nz");
+        let kinds: Vec<LineOpKind> = ops.iter().map(|o| o.kind).collect();
+        assert_eq!(
+            kinds,
+            [
+                LineOpKind::Delete,
+                LineOpKind::Delete,
+                LineOpKind::Delete,
+                LineOpKind::Insert,
+                LineOpKind::Insert,
+                LineOpKind::Insert,
+            ]
+        );
+    }
+
+    #[test]
+    fn diff_lines_stays_raw_on_whitespace_only_inputs() {
+        // diff() reports the UI empty state here; diff_lines has no UI and
+        // returns the real ops, keeping reconstructability universal.
+        assert_eq!(diff(" ", "\t", Granularity::Word), DiffResult::default());
+        let ops = diff_lines(" ", "\t");
+        let kinds: Vec<LineOpKind> = ops.iter().map(|o| o.kind).collect();
+        assert_eq!(kinds, [LineOpKind::Delete, LineOpKind::Insert]);
+        assert_eq!(ops[0].text, " ");
+        assert_eq!(ops[1].text, "\t");
     }
 
     #[test]

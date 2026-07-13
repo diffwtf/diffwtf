@@ -1,0 +1,26 @@
+# diff.wtf benchmark: JS reference vs shipped wasm engine
+# node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 55c3810
+# median of 50 runs after 10 warmup runs, word granularity, interleaved
+
+sample-rust: the "Load example" pair every visitor sees
+  input: 343 + 360 chars, +6/-6 lines
+  js reference    0.041 ms
+  wasm end-to-end 0.103 ms
+  ratio (js/wasm) 0.40x
+
+large-perf: 5,000-line / 150 KB file, 44 edited lines (the marketing chart case)
+  input: 152,579 + 152,846 chars, +44/-42 lines
+  js reference    5.79 ms
+  wasm end-to-end 10.11 ms
+  ratio (js/wasm) 0.57x
+
+large-identical: the same 5,000-line file on both sides: isolates result-transfer cost
+  input: 152,579 + 152,579 chars, +0/-0 lines
+  js reference    0.700 ms
+  wasm end-to-end 9.84 ms
+  ratio (js/wasm) 0.07x
+
+# summary (medians)
+# sample-rust: js 0.041 ms vs wasm 0.103 ms -> 0.40x
+# large-perf: js 5.79 ms vs wasm 10.11 ms -> 0.57x
+# large-identical: js 0.700 ms vs wasm 9.84 ms -> 0.07x
