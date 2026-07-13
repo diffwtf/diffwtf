@@ -16,7 +16,7 @@
 mod common;
 
 use common::check_invariants;
-use diffwtf_core::{diff, DiffResult, Granularity};
+use diffwtf_core::{diff, DiffResult, Granularity, RowKind};
 
 /// xorshift64: deterministic, seedable, good enough for test-input shuffling.
 struct Rng(u64);
@@ -146,6 +146,44 @@ fn random_pairs_hold_all_invariants_and_stay_minimal() {
         };
         check_case(case, &left, &right);
     }
+}
+
+#[test]
+fn depth_cap_degrades_but_stays_honest_and_reconstructable() {
+    // Exceeds the MAX_D = 2048 search depth cap in src/myers.rs through the
+    // public API: 1200 unrelated lines per side plus one shared line buried
+    // at different offsets makes the minimal diff D = 2 * 1201 - 2 = 2400.
+    // Past the cap the trimmed middle degrades to del-all then ins-all, so
+    // the shared middle line is NOT matched, while the shared prefix and
+    // suffix lines still trim to Equal rows.
+    let build = |side: &str, shared_at: usize| -> String {
+        let mut lines = vec!["shared prefix".to_string()];
+        lines.extend((0..1200).map(|i| format!("{side} only {i}")));
+        lines.insert(shared_at, "shared middle".to_string());
+        lines.push("shared suffix".to_string());
+        lines.join("\n")
+    };
+    let left = build("left", 601);
+    let right = build("right", 350);
+
+    let result = diff(&left, &right, Granularity::Word);
+    // Reconstructability and every other contract invariant.
+    check_invariants("depth-cap", &left, &right, &result);
+
+    // Degraded counts: all 1201 middle lines on each side, not the minimal
+    // 1200 (a minimal diff would match "shared middle" and produce a third
+    // Equal row; the count difference is what proves the cap triggered).
+    assert_eq!(result.removed, 1201);
+    assert_eq!(result.added, 1201);
+
+    // Degraded shape: Equal prefix row, one Modify run (the equal-length
+    // del and ins runs pair index-wise), Equal suffix row.
+    assert_eq!(result.rows.len(), 1203);
+    assert_eq!(result.rows.first().unwrap().kind, RowKind::Equal);
+    assert_eq!(result.rows.last().unwrap().kind, RowKind::Equal);
+    assert!(result.rows[1..1202]
+        .iter()
+        .all(|r| r.kind == RowKind::Modify));
 }
 
 #[test]

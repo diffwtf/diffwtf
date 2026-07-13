@@ -5,8 +5,12 @@
 //!
 //! Differences from the reference `lcs()`:
 //!
-//! - No 600 000-cell bailout: the engine always produces a minimal diff.
-//!   Worst-case cost is documented below instead.
+//! - The reference's 600 000-cell bailout is replaced by a search depth cap:
+//!   if a diff would need more than `MAX_D` line edits after trimming, the
+//!   trimmed middle degrades to del-all then ins-all (the reference's own
+//!   degradation mode). Every input under the cap gets a guaranteed minimal
+//!   diff. See `MAX_D` for the memory math and DECISIONS.md D3 for the
+//!   decision record.
 //! - Within each hunk (a maximal run of non-equal ops) the output is
 //!   canonicalized to all deletions before all insertions. The set of deleted
 //!   and inserted lines between two matches is the same regardless of how the
@@ -17,17 +21,27 @@
 //! Complexity (n, m: line counts of the trimmed middle; D: edit distance,
 //! that is the number of deleted plus inserted lines):
 //!
-//! - Time: O((n + m) * D). Near-identical inputs are close to linear; the
-//!   worst case (nothing in common, D = n + m) is quadratic.
+//! - Time: O((n + m) * min(D, MAX_D)). Near-identical inputs are close to
+//!   linear.
 //! - Memory: this is the plain V-array variant with a per-round trace for
 //!   path recovery, not the linear-space refinement. The trace holds
-//!   sum(2d + 1 for d in 0..D) = D^2 words, so memory is O(D^2): trivial for
-//!   typical inputs, but two completely different inputs of 5 000 lines each
-//!   (D = 10 000) allocate about 10^8 words, roughly 800 MB on 64-bit and
-//!   400 MB on wasm32. If that ever bites in production, the linear-space
-//!   middle-snake refinement is the known follow-up.
+//!   sum(2d + 1 for d in 0..D) = D^2 words and D is capped at MAX_D, so it
+//!   tops out around 34 MB (17 MB on wasm32); see `MAX_D`. Linear-space
+//!   Myers (middle snake) is the planned post-launch replacement, which
+//!   subsumes the cap.
 
 use crate::lcs::Op;
+
+/// Depth cap for the forward search, sized so the backtrack trace stays
+/// within a roughly 32 MB budget. The trace holds
+/// sum(2d + 1 for d in 0..D) = D^2 words, so the budget gives
+/// D^2 * 8 bytes <= 32 MiB, D <= sqrt(4 194 304) = 2048. At the cap the
+/// trace is 2048^2 = 4 194 304 words: about 34 MB at 8-byte words on 64-bit
+/// hosts and 17 MB on wasm32 (4-byte words), regardless of input size.
+/// Diffs needing at most 2048 line edits after prefix/suffix trimming (any
+/// realistic paste) are unaffected and stay minimal; past the cap the
+/// trimmed middle degrades to del-all then ins-all (see `middle_capped`).
+const MAX_D: usize = 2048;
 
 /// Myers diff over two slices of lines. Returns ops in order, hunks
 /// canonicalized to deletions before insertions.
@@ -67,9 +81,24 @@ pub(crate) fn diff_slices<'a>(a: &[&'a str], b: &[&'a str]) -> Vec<(Op, &'a str)
 /// Greedy forward pass plus trace-based backtrack over the trimmed middle
 /// (both sides non-empty, first and last elements differ).
 fn middle<'a>(a: &[&'a str], b: &[&'a str], out: &mut Vec<(Op, &'a str)>) {
+    middle_capped(a, b, out, MAX_D);
+}
+
+/// `middle` with the depth cap as a parameter, crate-internal so tests can
+/// force the give-up path cheaply: through the public API it takes an input
+/// needing more than `MAX_D` edits (thousands of lines), and the theoretical
+/// never-found case cannot be forced at all (round n + m always reaches
+/// (n, m)); both funnel into the same fallback branch below, so a small
+/// cap here exercises exactly the code the theoretical case would run.
+///
+/// If no path is found within `max_d` rounds, the middle degrades to del-all
+/// then ins-all, mirroring the reference LCS bailout's degradation mode:
+/// reconstruction stays byte-exact and counts stay honest, the diff is just
+/// not minimal.
+fn middle_capped<'a>(a: &[&'a str], b: &[&'a str], out: &mut Vec<(Op, &'a str)>, max_d: usize) {
     let n = a.len();
     let m = b.len();
-    let max = n + m;
+    let max = (n + m).min(max_d);
     let offset = max as isize;
 
     // v[k + offset] = furthest x on diagonal k. All reads at round d see
@@ -111,8 +140,11 @@ fn middle<'a>(a: &[&'a str], b: &[&'a str], out: &mut Vec<(Op, &'a str)>) {
     }
 
     let Some(found_d) = found_d else {
-        // Unreachable (d = n + m always reaches (n, m)), but the engine must
-        // never panic on any input: degrade to the trivially correct diff.
+        // Depth cap exceeded (or, theoretically, the search failed to reach
+        // (n, m), which round n + m rules out): degrade the trimmed middle
+        // to the trivially correct del-all then ins-all diff. Covered by
+        // `capped_search_degrades_to_del_all_then_ins_all` below and the
+        // public-API cap test in tests/properties.rs.
         for &item in a {
             out.push((Op::Del, item));
         }
@@ -150,11 +182,22 @@ fn middle<'a>(a: &[&'a str], b: &[&'a str], out: &mut Vec<(Op, &'a str)>) {
         x = prev_x;
         y = prev_y;
     }
-    // What remains is the round-0 snake, which runs down the k = 0 diagonal.
-    debug_assert_eq!(x, y);
+    // The backtrack must land on the round-0 origin: the middle is
+    // prefix-trimmed (a[0] != b[0]), so round 0's snake is empty and
+    // x == y == 0 here. If that invariant ever broke, an Eq drain would
+    // silently drop or misalign lines in release builds; draining each side
+    // independently (left as deletions, right as insertions) keeps
+    // reconstruction byte-exact by construction. In the intact case both
+    // loops run zero iterations, and test builds still fail loudly.
+    debug_assert_eq!(x, 0);
+    debug_assert_eq!(y, 0);
     while x > 0 {
         x -= 1;
-        rev.push((Op::Eq, a[x]));
+        rev.push((Op::Del, a[x]));
+    }
+    while y > 0 {
+        y -= 1;
+        rev.push((Op::Ins, b[y]));
     }
 
     // Canonicalize each hunk to deletions before insertions (see module doc).
@@ -259,6 +302,40 @@ mod tests {
         assert_reconstructs(&a, &b, &ops);
         let edits = ops.iter().filter(|(op, _)| *op != Op::Eq).count();
         assert_eq!(edits, 2);
+    }
+
+    #[test]
+    fn capped_search_degrades_to_del_all_then_ins_all() {
+        // Forces the give-up fallback in `middle_capped` through the
+        // crate-internal cap parameter. Through the public API the branch
+        // needs an input with more than MAX_D = 2048 edits (covered by the
+        // full-size test in tests/properties.rs), and the never-found case
+        // it also guards cannot be forced at all: round n + m always
+        // reaches (n, m). The tiny cap runs the identical fallback code.
+        let a = ["a", "b", "c"];
+        let b = ["x", "y"];
+        let mut ops = Vec::new();
+        middle_capped(&a, &b, &mut ops, 1); // true D is 5
+        assert_eq!(kinds(&ops), "---++");
+        assert_reconstructs(&a, &b, &ops);
+    }
+
+    #[test]
+    fn cap_boundary_is_exact() {
+        // This pair's minimal diff is D = 2 (delete "a", insert "d").
+        let a = ["a", "c"];
+        let b = ["c", "d"];
+
+        // At the cap: still the minimal diff.
+        let mut minimal = Vec::new();
+        middle_capped(&a, &b, &mut minimal, 2);
+        assert_eq!(minimal, vec![(Op::Del, "a"), (Op::Eq, "c"), (Op::Ins, "d")]);
+
+        // One below: degraded, counts honest, reconstruction intact.
+        let mut degraded = Vec::new();
+        middle_capped(&a, &b, &mut degraded, 1);
+        assert_eq!(kinds(&degraded), "--++");
+        assert_reconstructs(&a, &b, &degraded);
     }
 
     #[test]
