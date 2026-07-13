@@ -181,6 +181,7 @@ name = "diffwtf-wasm"
 version = "0.1.0"
 dependencies = [
  "diffwtf-core",
+ "serde",
  "serde-wasm-bindgen",
  "wasm-bindgen",
 ]
