@@ -95,6 +95,65 @@ export function intraDiff(a, b, granularity, unicodeScalars = false) {
   return [mergeSegs(L), mergeSegs(R)];
 }
 
+/** Re-encode a `compute()` result as the sparse v2 wasm-boundary shape
+ * (docs/scaffold-spec.md, "Wasm boundary contract v2"): run-length ops over
+ * lines plus intra-line highlight ranges for Modify rows only, matching the
+ * serde output of diffwtf-core's `SparseDiff` key for key. Span offsets are
+ * UTF-16 code units (JS `String#length` units, exactly what `slice` takes).
+ *
+ * This is a pure re-encoding: the reference still defines behavior through
+ * `compute()`, and v2 is derived from it, so the two shapes cannot disagree.
+ * Expects a contract-normalized result (empty lines as `[]`, unicodeScalars
+ * applied), the form the fixture generator produces; on a raw prototype-form
+ * result the single-space placeholder would still encode correctly (it is
+ * unhighlighted), but offsets would count its fake space. */
+export function sparseFromResult(result) {
+  const spansOf = segments => {
+    const spans = [];
+    let cursor = 0;
+    for (const s of segments) {
+      if (s.highlighted) spans.push({ start: cursor, end: cursor + s.text.length });
+      cursor += s.text.length;
+    }
+    return spans;
+  };
+  const ops = [], highlights = [];
+  let oldPos = 0, newPos = 0, i = 0;
+  const rows = result.rows;
+  while (i < rows.length) {
+    if (rows[i].kind === 'equal') {
+      const start = i;
+      while (i < rows.length && rows[i].kind === 'equal') i++;
+      const len = i - start;
+      ops.push({ kind: 'equal', old_start: oldPos, new_start: newPos, old_lines: len, new_lines: len });
+      oldPos += len; newPos += len;
+    } else {
+      // A hunk: a maximal run of non-equal rows (Modify rows first, then
+      // leftover pure deletes or inserts). Encoded as a Delete run then an
+      // Insert run, cursors recorded on both sides at each op's position.
+      let oldLines = 0, newLines = 0;
+      while (i < rows.length && rows[i].kind !== 'equal') {
+        const row = rows[i];
+        if (row.kind === 'modify') {
+          highlights.push({ left: spansOf(row.left.segments), right: spansOf(row.right.segments) });
+        }
+        if (row.left) oldLines++;
+        if (row.right) newLines++;
+        i++;
+      }
+      if (oldLines) {
+        ops.push({ kind: 'delete', old_start: oldPos, new_start: newPos, old_lines: oldLines, new_lines: 0 });
+        oldPos += oldLines;
+      }
+      if (newLines) {
+        ops.push({ kind: 'insert', old_start: oldPos, new_start: newPos, old_lines: 0, new_lines: newLines });
+        newPos += newLines;
+      }
+    }
+  }
+  return { ops, highlights, added: result.added, removed: result.removed, line_count: result.line_count };
+}
+
 /** The reference entry point: semantic `DiffResult` for two inputs at
  * granularity "word" | "char". Timing is deliberately not part of the result
  * (the product measures around the wasm call instead). */

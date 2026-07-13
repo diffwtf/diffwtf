@@ -1,0 +1,39 @@
+{
+  "ops": [
+    {
+      "kind": "delete",
+      "old_start": 0,
+      "new_start": 0,
+      "old_lines": 1,
+      "new_lines": 0
+    },
+    {
+      "kind": "insert",
+      "old_start": 1,
+      "new_start": 0,
+      "old_lines": 0,
+      "new_lines": 1
+    },
+    {
+      "kind": "equal",
+      "old_start": 1,
+      "new_start": 1,
+      "old_lines": 2,
+      "new_lines": 2
+    }
+  ],
+  "highlights": [
+    {
+      "left": [
+        {
+          "start": 0,
+          "end": 1
+        }
+      ],
+      "right": []
+    }
+  ],
+  "added": 1,
+  "removed": 1,
+  "line_count": 3
+}

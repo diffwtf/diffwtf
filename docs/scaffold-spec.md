@@ -44,7 +44,9 @@ diffwtf/
 │   ├── index.html              # tool + landing (from Diff Checker design)
 │   ├── privacy.html
 │   ├── css/site.css
-│   ├── js/app.js               # state, events, rendering (vanilla ES module)
+│   ├── js/app.js               # state, events, timing (vanilla ES module)
+│   ├── js/assemble.js          # rebuilds renderable rows from the sparse v2 result (M9)
+│   ├── js/render.js            # DOM builders for the split/unified views (M9)
 │   ├── og-card.png             # rendered from the design's OG card (1200×630)
 │   └── pkg/                    # wasm-pack output — GITIGNORED, built by CI/local script
 ├── scripts/
@@ -180,6 +182,9 @@ Notes on the contract:
   (`kind`, `highlighted`); `app.js` maps them to the design's classes.
 - Both views are returned in one call because the UI's Split/Unified toggle re-renders without
   recompute; duplication cost is trivial and it keeps conformance testing 1:1 with the reference.
+- Since M9, `DiffResult` remains the crate contract but is no longer what crosses the wasm
+  boundary; the site uses the sparse v2 boundary below and reassembles the same views in JS.
+  The crate additionally exposes `diff_sparse` (see "Wasm boundary contract v2").
 
 ### Algorithm requirements (behavioral parity with the JS reference)
 
@@ -243,24 +248,93 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-diffwtf-core = { path = "../diffwtf-core", features = ["serde"] }
+diffwtf-core = { path = "../diffwtf-core" }
 wasm-bindgen = "0.2"
-serde-wasm-bindgen = "0.6"
+js-sys = "0.3"
 ```
+
+The wrapper exposes `compute(left, right, granularity)` returning the sparse v2 boundary
+object below, plus `compute_probe` (same computation, returns only a checksum) for the phased
+benchmark. See `crates/diffwtf-wasm/src/lib.rs` for the shape documentation.
+
+### Wasm boundary contract v2 (M9)
+
+Motivation (issue #9): v1 marshalled the full `DiffResult`, both views, every Equal row,
+through serde-wasm-bindgen, one JS object at a time. Transfer cost scaled with document size
+and dominated end-to-end time on large inputs. The v2 boundary scales with the number of
+edits instead, and the web layer derives the views from the ops plus the two original input
+strings it already holds.
+
+Core-side API (pure Rust, serde-serializable behind the `serde` feature; `diff()` and
+`diff_lines()` are unchanged):
 
 ```rust
-use wasm_bindgen::prelude::*;
+/// A maximal run of equal, deleted, or inserted lines.
+/// old_start/new_start are 0-based line indices (inputs split on '\n');
+/// both cursors advance monotonically and are recorded on every run.
+pub struct OpRun {
+    pub kind: LineOpKind,   // Equal | Delete | Insert
+    pub old_start: u32,
+    pub new_start: u32,
+    pub old_lines: u32,     // 0 on Insert runs
+    pub new_lines: u32,     // 0 on Delete runs
+}
 
-#[wasm_bindgen]
-pub fn compute(left: &str, right: &str, granularity: &str) -> JsValue {
-    let gran = match granularity {
-        "char" => diffwtf_core::Granularity::Char,
-        _ => diffwtf_core::Granularity::Word,
-    };
-    let result = diffwtf_core::diff(left, right, gran);
-    serde_wasm_bindgen::to_value(&result).expect("serialize DiffResult")
+/// Half-open highlighted range within one line, in UTF-16 code units
+/// (JS string indexing; this type exists for the boundary).
+pub struct Span { pub start: u32, pub end: u32 }
+
+/// Per Modify row: highlighted ranges on the deleted and inserted line.
+pub struct RowHighlights { pub left: Vec<Span>, pub right: Vec<Span> }
+
+pub struct SparseDiff {
+    pub ops: Vec<OpRun>,
+    pub highlights: Vec<RowHighlights>, // one per Modify row, stream order
+    pub added: u32,
+    pub removed: u32,
+    pub line_count: u32,
+}
+
+pub fn diff_sparse(left: &str, right: &str, granularity: Granularity) -> SparseDiff;
+```
+
+Semantics:
+
+- A Delete run directly followed by an Insert run is one hunk; view assembly pairs the first
+  `min(old_lines, new_lines)` lines index-wise as Modify rows, which consume `highlights` in
+  stream order. Within a hunk all deletions precede all insertions, as in v1.
+- Reassembling rows from a `SparseDiff` plus the two inputs reproduces `diff()` exactly. The
+  Rust suite asserts this with its own assembler (tests/common/mod.rs); the JS suite asserts
+  it for the shipped assembler (scripts/conformance-web.mjs against web/js/assemble.js).
+- Both trim-empty inputs return `SparseDiff::default()` (the UI empty state), like `diff()`.
+- Identical-input fast path: when `left == right` (byte equality), the result is a single
+  Equal run without running the diff. The output is identical to the full path's; it is a
+  product optimization and is disclosed in the benchmark methodology, never used to support
+  an engine-speed claim.
+
+Across the boundary, `compute()` returns the struct-of-arrays encoding as a plain JS object
+of parallel typed arrays (field names match the serde output of the core types):
+
+```text
+{
+  kind:       Uint8Array,   // per op: 0 equal, 1 delete, 2 insert
+  old_start:  Uint32Array,  new_start: Uint32Array,
+  old_lines:  Uint32Array,  new_lines: Uint32Array,
+  hl_counts:  Uint32Array,  // per Modify row: left span count, right span count
+  hl_ranges:  Uint32Array,  // flattened [start, end) pairs, UTF-16 code units
+  added: number, removed: number, line_count: number
 }
 ```
+
+`web/js/assemble.js` rebuilds the v1-shaped result (rows, unified, counts) from this plus the
+original strings; `web/js/render.js` renders it. The perf badge times the wasm call PLUS the
+assembly, since renderable rows only exist after both (honest user-perceived number).
+
+Conformance: `fixtures/expected/{name}.{word,char}.ops.json` hold the reference-derived
+sparse output (refdiff's `sparseFromResult`, a pure re-encoding of the reference result, so
+the two fixture tiers cannot disagree). The Rust suite checks `diff_sparse` against them
+under the same exact-vs-invariant policy; `scripts/conformance-web.mjs` (run in CI after the
+wasm build) checks the built wasm boundary and the shipped JS assembler against both tiers.
 
 Build (also in `scripts/build-wasm.sh`):
 
@@ -278,8 +352,10 @@ it comfortably under ~100 KB for an engine this size. Size is marketing here.
   (high-fidelity: tokens, copy, and interactions are final). Extract inline styles into
   `css/site.css`; keep HTML semantic.
 - `js/app.js` owns: state (`left, right, view, granularity, dragOverL/R, computed`), event
-  wiring (input, drag/drop with dragleave, toggles, Load example, Clear), timing measurement,
-  and DOM rendering of `DiffResult` (split 4-col grid / unified 3-col grid, exactly per design).
+  wiring (input, drag/drop with dragleave, toggles, Load example, Clear), and timing
+  measurement. Since M9, view construction lives in `js/assemble.js` (sparse v2 result plus
+  originals to renderable rows) and the DOM builders in `js/render.js` (split 4-col grid /
+  unified 3-col grid, exactly per design); app.js calls both.
 - **Live diff on every input** — no debounce initially; add only if profiling demands.
 - The two sample texts from the prototype ship verbatim as the "Load example" content.
 - Ad slot: markup present, hidden by default (matches design tweak `showAds=false`).
@@ -302,12 +378,17 @@ it comfortably under ~100 KB for an engine this size. Size is marketing here.
 3. `scripts/gen-fixtures.mjs` regenerates `fixtures/expected/`. Committed outputs are reviewed
    in PRs like any other code.
 4. `crates/diffwtf-core/tests/conformance.rs` loads cases + expected JSON (serde) and asserts
-   per the exact-vs-invariant policy above.
+   per the exact-vs-invariant policy above. Since M9 this covers both fixture tiers: the
+   materialized `{name}.{gran}.json` against `diff()` and the sparse `{name}.{gran}.ops.json`
+   against `diff_sparse()`, plus a reassembly test proving the sparse tier is lossless.
+5. `scripts/conformance-web.mjs` (Node, needs `./scripts/build-wasm.sh` first; run by CI) checks
+   the built wasm boundary and the shipped `web/js/assemble.js` against both fixture tiers.
 
 ## CI (`.github/workflows/`)
 
 - **ci.yml** (push + PR): `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test
---workspace`, then `wasm-pack build` to prove the wasm target compiles. Cache cargo.
+--workspace`, then `wasm-pack build` to prove the wasm target compiles, then
+  `node scripts/conformance-web.mjs` against the built wasm. Cache cargo.
 - **deploy.yml** (push to main, once host is chosen): build wasm into `web/pkg`, deploy `web/`.
   Host preference: **Cloudflare Pages** (diff.wtf domain is easy to attach, correct
   `application/wasm` MIME, free); GitHub Pages is an acceptable fallback.
