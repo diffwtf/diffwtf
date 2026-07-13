@@ -1,5 +1,7 @@
 # diff.wtf
 
+[![CI](https://github.com/diffwtf/diffwtf/actions/workflows/ci.yml/badge.svg)](https://github.com/diffwtf/diffwtf/actions/workflows/ci.yml)
+
 **The fastest diff on the web.** A client-side text/file diff checker — Rust → WebAssembly,
 runs entirely in your browser, nothing is ever uploaded.
 
