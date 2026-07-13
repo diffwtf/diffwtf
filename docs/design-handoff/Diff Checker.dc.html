@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>diff.wtf — the fastest diff checker on the web</title>
+<meta name="description" content="Compare text and files instantly. Rust → WebAssembly diff checker that runs 100% in your browser — no uploads, no servers, no limits.">
+<meta property="og:title" content="diff.wtf — the fastest diff checker on the web">
+<meta property="og:description" content="Rust → WASM diff. 50–100× faster than JS tools. Your text never leaves your browser.">
+<meta property="og:image" content="og-card.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#3fd68f;--head:'Space Grotesk',sans-serif;--ui:system-ui,-apple-system,'Segoe UI',sans-serif}
+body{margin:0;background:#0a0d11;color:#e6edf3}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+textarea{outline:none}
+textarea::placeholder{color:#46515f}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-thumb{background:#232b36;border-radius:5px}
+*::-webkit-scrollbar-track{background:transparent}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+</style>
+</helmet>
+<div style="min-height:100vh;font-family:var(--ui);background:#0a0d11" data-screen-label="Diff tool">
+  <header style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid #1a212b">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700">diff<span style="color:var(--accent)">.wtf</span><span style="color:var(--accent);animation:blink 1.1s steps(1) infinite">_</span></span>
+    </div>
+    <nav style="display:flex;gap:22px;align-items:center;font-size:13px">
+      <a href="#how" style="color:#8b98a9" style-hover="color:#e6edf3;text-decoration:none">Why it's fast</a>
+      <a href="#" style="display:flex;align-items:center;gap:7px;color:#e6edf3;border:1px solid #232b36;border-radius:6px;padding:6px 12px;font-size:12.5px" style-hover="border-color:#3a4657;text-decoration:none">Star on GitHub</a>
+    </nav>
+  </header>
+
+  <div style="text-align:center;padding:42px 20px 6px">
+    <h1 style="font-family:var(--head);font-size:42px;font-weight:700;margin:0 0 10px;letter-spacing:-0.5px">The fastest diff on the web.</h1>
+    <p style="color:#8b98a9;font-size:15px;margin:0">Rust → WebAssembly · runs entirely in your browser · nothing is ever uploaded</p>
+  </div>
+
+  <main style="max-width:1240px;margin:0 auto;padding:28px 24px 20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#8b98a9">ORIGINAL</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#46515f">{{ lCount }} chars · or drop a file</span>
+        </div>
+        <div style="position:relative;display:flex;flex-direction:column">
+          <textarea value="{{ left }}" onChange="{{ onLeft }}" onDrop="{{ onLDrop }}" onDragOver="{{ onLOver }}" onDragLeave="{{ onLLeave }}" spellcheck="false" placeholder="Paste original text… or drop a file" style="min-height:190px;resize:vertical;background:#0d1218;border:1px solid #1a212b;border-radius:8px;padding:14px;color:#cdd6e0;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.55;width:100%;box-sizing:border-box" style-focus="border-color:#2d3a4c"></textarea>
+          <sc-if value="{{ lDrag }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;border:2px dashed var(--accent);border-radius:8px;background:color-mix(in srgb,var(--accent) 7%,transparent);display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent)">drop file to load</span>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#8b98a9">CHANGED</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#46515f">{{ rCount }} chars · or drop a file</span>
+        </div>
+        <div style="position:relative;display:flex;flex-direction:column">
+          <textarea value="{{ right }}" onChange="{{ onRight }}" onDrop="{{ onRDrop }}" onDragOver="{{ onROver }}" onDragLeave="{{ onRLeave }}" spellcheck="false" placeholder="Paste changed text… or drop a file" style="min-height:190px;resize:vertical;background:#0d1218;border:1px solid #1a212b;border-radius:8px;padding:14px;color:#cdd6e0;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.55;width:100%;box-sizing:border-box" style-focus="border-color:#2d3a4c"></textarea>
+          <sc-if value="{{ rDrag }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;border:2px dashed var(--accent);border-radius:8px;background:color-mix(in srgb,var(--accent) 7%,transparent);display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent)">drop file to load</span>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#46515f;margin-top:8px">// nothing you paste or drop ever leaves this tab — the diff runs locally</div>
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0 14px;flex-wrap:wrap">
+      <div style="display:flex;background:#0d1218;border:1px solid #1a212b;border-radius:8px;padding:3px;gap:2px">
+        <button onClick="{{ setSplit }}" style="{{ splitSt }}">Split</button>
+        <button onClick="{{ setUnified }}" style="{{ uniSt }}">Unified</button>
+      </div>
+      <div style="display:flex;background:#0d1218;border:1px solid #1a212b;border-radius:8px;padding:3px;gap:2px">
+        <button onClick="{{ setWord }}" style="{{ wordSt }}">Word</button>
+        <button onClick="{{ setChar }}" style="{{ charSt }}">Character</button>
+      </div>
+      <button onClick="{{ loadExample }}" style="padding:8px 14px;font-size:12.5px;cursor:pointer;background:transparent;border:1px solid #232b36;border-radius:8px;color:#8b98a9;font-family:inherit" style-hover="color:#e6edf3;border-color:#3a4657">Load example</button>
+      <button onClick="{{ clearAll }}" style="padding:8px 14px;font-size:12.5px;cursor:pointer;background:transparent;border:1px solid #232b36;border-radius:8px;color:#8b98a9;font-family:inherit" style-hover="color:#e6edf3;border-color:#3a4657">Clear</button>
+      <div style="flex:1"></div>
+      <span style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#8b98a9"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>{{ perfText }}</span>
+    </div>
+
+    <sc-if value="{{ showAdsVal }}" hint-placeholder-val="{{ false }}">
+      <div style="height:90px;max-width:728px;margin:0 auto 14px;border:1px dashed #2d3a4c;border-radius:6px;background:repeating-linear-gradient(45deg,#0d1218,#0d1218 8px,#10161e 8px,#10161e 16px);display:flex;align-items:center;justify-content:center">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#46515f">728×90 · AdSense / Carbon slot</span>
+      </div>
+    </sc-if>
+
+    <div style="border:1px solid #1a212b;border-radius:10px;background:#0d1218;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid #1a212b">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3fb950;font-weight:700">+{{ added }}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#f85149;font-weight:700">−{{ removed }}</span>
+        <span style="font-size:12px;color:#46515f">{{ diffLabel }}</span>
+        <div style="flex:1"></div>
+        <button style="display:flex;align-items:center;gap:6px;padding:5px 11px;font-size:11.5px;cursor:pointer;background:transparent;border:1px solid #232b36;border-radius:6px;color:#8b98a9;font-family:inherit" style-hover="color:#e6edf3;border-color:#3a4657">Export PDF <span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:1px 4px">PRO</span></button>
+        <button style="display:flex;align-items:center;gap:6px;padding:5px 11px;font-size:11.5px;cursor:pointer;background:transparent;border:1px solid #232b36;border-radius:6px;color:#8b98a9;font-family:inherit" style-hover="color:#e6edf3;border-color:#3a4657">AI summary <span style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:1px 4px">PRO</span></button>
+      </div>
+      <sc-if value="{{ isSplit }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:6px 0">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:44px minmax(0,1fr) 44px minmax(0,1fr)">
+              <span style="{{ r.lNumSt }}">{{ r.ln }}</span>
+              <span style="{{ r.lSt }}"><sc-for list="{{ r.lSegs }}" as="s"><span style="{{ s.st }}">{{ s.text }}</span></sc-for></span>
+              <span style="{{ r.rNumSt }}">{{ r.rn }}</span>
+              <span style="{{ r.rSt }}"><sc-for list="{{ r.rSegs }}" as="s"><span style="{{ s.st }}">{{ s.text }}</span></sc-for></span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isUnified }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:6px 0">
+          <sc-for list="{{ urows }}" as="u" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:40px 40px minmax(0,1fr)">
+              <span style="{{ u.aSt }}">{{ u.a }}</span>
+              <span style="{{ u.bSt }}">{{ u.b }}</span>
+              <span style="{{ u.cSt }}"><sc-for list="{{ u.segs }}" as="s"><span style="{{ s.st }}">{{ s.text }}</span></sc-for></span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <section id="how" style="max-width:1240px;margin:0 auto;padding:36px 24px 48px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <div style="background:#0d1218;border:1px solid #1a212b;border-radius:10px;padding:22px">
+        <h3 style="font-family:var(--head);font-size:17px;margin:0 0 8px">50–100× faster</h3>
+        <p style="color:#8b98a9;font-size:13px;line-height:1.6;margin:0 0 18px">Myers diff implemented in Rust, compiled to WebAssembly. Large documents diff in milliseconds, not seconds.</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b98a9"><span>diff.wtf (WASM)</span><span style="color:var(--accent)">4 ms</span></div>
+            <div style="height:6px;background:#161c24;border-radius:3px"><div style="width:3%;height:100%;background:var(--accent);border-radius:3px"></div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b98a9"><span>typical JS diff tool</span><span>~210 ms</span></div>
+            <div style="height:6px;background:#161c24;border-radius:3px"><div style="width:100%;height:100%;background:#3a4657;border-radius:3px"></div></div>
+          </div>
+          <span style="font-size:10.5px;color:#46515f">1 MB text, line diff — illustrative benchmark</span>
+        </div>
+      </div>
+      <div style="background:#0d1218;border:1px solid #1a212b;border-radius:10px;padding:22px">
+        <h3 style="font-family:var(--head);font-size:17px;margin:0 0 8px">Your text never leaves the browser</h3>
+        <p style="color:#8b98a9;font-size:13px;line-height:1.6;margin:0">100% client-side. No uploads, no servers, no logs. Diff contracts, source code, or anything confidential with zero exposure. Works offline once loaded.</p>
+      </div>
+      <div style="background:#0d1218;border:1px solid #1a212b;border-radius:10px;padding:22px">
+        <h3 style="font-family:var(--head);font-size:17px;margin:0 0 8px">Open source core</h3>
+        <p style="color:#8b98a9;font-size:13px;line-height:1.6;margin:0 0 14px">The Rust diff engine is MIT-licensed. Audit it, embed it, or use it via the upcoming Diff API.</p>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8b98a9;background:#10161e;border:1px solid #1a212b;border-radius:6px;padding:7px 10px;display:inline-block">$ cargo add diffwtf-core</span>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #1a212b;padding:20px 28px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#46515f">
+    <span>© 2026 diff.wtf · MIT-licensed engine</span>
+    <div style="display:flex;gap:18px"><a href="#" style="color:#8b98a9">GitHub</a><a href="#" style="color:#8b98a9">API</a><a href="Privacy.dc.html" style="color:#8b98a9">Privacy</a></div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#3fd68f&quot;, &quot;options&quot;: [&quot;#3fd68f&quot;, &quot;#f0883e&quot;, &quot;#58a6ff&quot;, &quot;#bc8cff&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Theme&quot;}, &quot;typePairing&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;Sans + Mono&quot;, &quot;options&quot;: [&quot;Sans + Mono&quot;, &quot;Mono-forward&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Theme&quot;}, &quot;showAds&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Layout&quot;}}">
+class Component extends DCLogic {
+  sampleA = `use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn diff(old_text: &str, new_text: &str) -> String {
+    let ops = myers::diff_lines(old_text, new_text);
+    serde_json::to_string(&ops).unwrap()
+}
+
+fn normalize(s: &str) -> String {
+    s.trim().to_string()
+}
+
+// TODO: add word-level refinement
+fn refine(ops: Vec<Op>) -> Vec<Op> {
+    ops
+}`;
+  sampleB = `use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn diff(old_text: &str, new_text: &str) -> JsValue {
+    let ops = myers::diff_lines(old_text, new_text);
+    refine(&mut ops);
+    serde_wasm_bindgen::to_value(&ops).unwrap()
+}
+
+fn normalize(s: &str) -> String {
+    s.trim().to_lowercase()
+}
+
+fn refine(ops: &mut Vec<Op>) {
+    intraline::split_words(ops);
+}`;
+  state = Object.assign({ left: this.sampleA, right: this.sampleB, view: 'split', gran: 'word', lDrag: false, rDrag: false },
+    this.compute(this.sampleA, this.sampleB, 'word'));
+
+  MONO = "'JetBrains Mono',Menlo,monospace";
+  cellBase() { return { padding: '1px 12px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: this.MONO, fontSize: '12.5px', lineHeight: '1.6', minHeight: '20px' }; }
+  numBase() { return { padding: '1px 8px', textAlign: 'right', color: '#46515f', fontFamily: this.MONO, fontSize: '11px', lineHeight: '1.85', userSelect: 'none' }; }
+  styles() {
+    if (this._st) return this._st;
+    const stripe = 'repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(255,255,255,.025) 6px,rgba(255,255,255,.025) 12px)';
+    this._st = {
+      eqCell: this.cellBase(),
+      delCell: Object.assign(this.cellBase(), { background: 'rgba(248,81,73,.12)' }),
+      insCell: Object.assign(this.cellBase(), { background: 'rgba(63,185,80,.11)' }),
+      emptyCell: Object.assign(this.cellBase(), { background: stripe }),
+      eqNum: this.numBase(),
+      delNum: Object.assign(this.numBase(), { background: 'rgba(248,81,73,.12)', color: '#a05a57' }),
+      insNum: Object.assign(this.numBase(), { background: 'rgba(63,185,80,.11)', color: '#4e7d5c' }),
+      emptyNum: Object.assign(this.numBase(), { background: stripe }),
+      delHl: { background: 'rgba(248,81,73,.42)', borderRadius: '2px' },
+      insHl: { background: 'rgba(63,185,80,.38)', borderRadius: '2px' }
+    };
+    return this._st;
+  }
+
+  lcs(a, b) {
+    let s = 0;
+    while (s < a.length && s < b.length && a[s] === b[s]) s++;
+    let e = 0;
+    while (e < a.length - s && e < b.length - s && a[a.length - 1 - e] === b[b.length - 1 - e]) e++;
+    const am = a.slice(s, a.length - e), bm = b.slice(s, b.length - e);
+    const ops = [];
+    for (let i = 0; i < s; i++) ops.push(['eq', a[i]]);
+    if (am.length * bm.length > 600000) {
+      am.forEach(x => ops.push(['del', x]));
+      bm.forEach(x => ops.push(['ins', x]));
+    } else if (am.length || bm.length) {
+      const n = am.length, m = bm.length;
+      const dp = [];
+      for (let i = 0; i <= n; i++) dp.push(new Uint32Array(m + 1));
+      for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+        dp[i][j] = am[i] === bm[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      let i = 0, j = 0;
+      while (i < n && j < m) {
+        if (am[i] === bm[j]) { ops.push(['eq', am[i]]); i++; j++; }
+        else if (dp[i + 1][j] >= dp[i][j + 1]) { ops.push(['del', am[i]]); i++; }
+        else { ops.push(['ins', bm[j]]); j++; }
+      }
+      while (i < n) ops.push(['del', am[i++]]);
+      while (j < m) ops.push(['ins', bm[j++]]);
+    }
+    for (let k = 0; k < e; k++) ops.push(['eq', a[a.length - e + k]]);
+    return ops;
+  }
+
+  mergeSegs(list, hl) {
+    const out = [];
+    for (const t of list) {
+      const st = t.h ? hl : null;
+      if (out.length && out[out.length - 1].st === st) out[out.length - 1].text += t.text;
+      else out.push({ text: t.text, st });
+    }
+    return out.length ? out : [{ text: ' ', st: null }];
+  }
+
+  intraDiff(a, b, gran) {
+    const tok = x => gran === 'char' ? x.split('') : (x.match(/\w+|\s+|[^\w\s]/g) || []);
+    const ops = this.lcs(tok(a), tok(b));
+    const L = [], R = [], ST = this.styles();
+    for (const [t, x] of ops) {
+      if (t === 'eq') { L.push({ text: x, h: false }); R.push({ text: x, h: false }); }
+      else if (t === 'del') L.push({ text: x, h: true });
+      else R.push({ text: x, h: true });
+    }
+    return [this.mergeSegs(L, ST.delHl), this.mergeSegs(R, ST.insHl)];
+  }
+
+  compute(l, r, gran) {
+    const t0 = performance.now();
+    const ST = this.styles();
+    const plain = x => [{ text: x || ' ', st: null }];
+    const rows = [], urows = [];
+    let added = 0, removed = 0;
+    if (l.trim() === '' && r.trim() === '') return { rows, urows, added, removed, ms: 0, lines: 0 };
+    const ops = this.lcs(l.split('\n'), r.split('\n'));
+    let i = 0, ln = 1, rn = 1;
+    while (i < ops.length) {
+      if (ops[i][0] === 'eq') {
+        const segs = plain(ops[i][1]);
+        rows.push({ ln, rn, lSegs: segs, rSegs: segs, lSt: ST.eqCell, rSt: ST.eqCell, lNumSt: ST.eqNum, rNumSt: ST.eqNum });
+        urows.push({ a: ln, b: rn, segs, aSt: ST.eqNum, bSt: ST.eqNum, cSt: ST.eqCell });
+        ln++; rn++; i++;
+      } else {
+        const dels = [], inss = [];
+        while (i < ops.length && ops[i][0] === 'del') { dels.push(ops[i][1]); i++; }
+        while (i < ops.length && ops[i][0] === 'ins') { inss.push(ops[i][1]); i++; }
+        removed += dels.length; added += inss.length;
+        const uDel = [], uIns = [];
+        for (let k = 0; k < Math.max(dels.length, inss.length); k++) {
+          const hasD = k < dels.length, hasI = k < inss.length;
+          let lSegs = hasD ? plain(dels[k]).map(x => ({ text: x.text, st: null })) : [];
+          let rSegs = hasI ? plain(inss[k]) : [];
+          if (hasD && hasI) { const p = this.intraDiff(dels[k], inss[k], gran); lSegs = p[0]; rSegs = p[1]; }
+          rows.push({
+            ln: hasD ? ln : '', rn: hasI ? rn : '',
+            lSegs, rSegs,
+            lSt: hasD ? ST.delCell : ST.emptyCell, rSt: hasI ? ST.insCell : ST.emptyCell,
+            lNumSt: hasD ? ST.delNum : ST.emptyNum, rNumSt: hasI ? ST.insNum : ST.emptyNum
+          });
+          if (hasD) { uDel.push({ a: ln, b: '', segs: lSegs, aSt: ST.delNum, bSt: ST.delNum, cSt: ST.delCell }); ln++; }
+          if (hasI) { uIns.push({ a: '', b: rn, segs: rSegs, aSt: ST.insNum, bSt: ST.insNum, cSt: ST.insCell }); rn++; }
+        }
+        urows.push(...uDel, ...uIns);
+      }
+    }
+    return { rows, urows, added, removed, ms: performance.now() - t0, lines: Math.max(l.split('\n').length, r.split('\n').length) };
+  }
+
+  recompute(patch) {
+    this.setState(s => {
+      const next = Object.assign({}, s, patch);
+      return Object.assign(patch, this.compute(next.left, next.right, next.gran));
+    });
+  }
+
+  applyTheme() {
+    const r = document.documentElement.style;
+    r.setProperty('--accent', this.props.accent ?? '#3fd68f');
+    const mono = (this.props.typePairing ?? 'Sans + Mono') === 'Mono-forward';
+    r.setProperty('--head', mono ? this.MONO : "'Space Grotesk',sans-serif");
+    r.setProperty('--ui', mono ? this.MONO : "system-ui,-apple-system,'Segoe UI',sans-serif");
+  }
+  componentDidMount() { this.applyTheme(); }
+  componentDidUpdate() { this.applyTheme(); }
+
+  dropFile(e, key, flag) {
+    e.preventDefault();
+    this.setState({ [flag]: false });
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    f.text().then(t => this.recompute({ [key]: t }));
+  }
+
+  segBtn(on) {
+    return { padding: '6px 14px', fontSize: '12.5px', cursor: 'pointer', border: 'none', background: on ? '#1c2531' : 'transparent', color: on ? '#e6edf3' : '#8b98a9', fontFamily: 'inherit', borderRadius: '6px' };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const empty = s.rows.length === 0;
+    return {
+      left: s.left, right: s.right,
+      lCount: s.left.length.toLocaleString(), rCount: s.right.length.toLocaleString(),
+      onLeft: e => this.recompute({ left: e.target.value }),
+      onRight: e => this.recompute({ right: e.target.value }),
+      lDrag: s.lDrag, rDrag: s.rDrag,
+      onLOver: e => { e.preventDefault(); if (!s.lDrag) this.setState({ lDrag: true }); },
+      onLLeave: () => this.setState({ lDrag: false }),
+      onLDrop: e => this.dropFile(e, 'left', 'lDrag'),
+      onROver: e => { e.preventDefault(); if (!s.rDrag) this.setState({ rDrag: true }); },
+      onRLeave: () => this.setState({ rDrag: false }),
+      onRDrop: e => this.dropFile(e, 'right', 'rDrag'),
+      setSplit: () => this.setState({ view: 'split' }),
+      setUnified: () => this.setState({ view: 'unified' }),
+      setWord: () => this.recompute({ gran: 'word' }),
+      setChar: () => this.recompute({ gran: 'char' }),
+      loadExample: () => this.recompute({ left: this.sampleA, right: this.sampleB }),
+      clearAll: () => this.recompute({ left: '', right: '' }),
+      isSplit: s.view === 'split' && !empty,
+      isUnified: s.view === 'unified' && !empty,
+      splitSt: this.segBtn(s.view === 'split'), uniSt: this.segBtn(s.view === 'unified'),
+      wordSt: this.segBtn(s.gran === 'word'), charSt: this.segBtn(s.gran === 'char'),
+      rows: s.rows, urows: s.urows,
+      added: s.added, removed: s.removed,
+      diffLabel: empty ? 'paste text above to see the diff' : (s.added + s.removed === 0 ? 'texts are identical' : 'lines changed'),
+      perfText: empty ? 'ready · engine loaded' : `${s.lines} lines · ${s.ms < 0.1 ? '<0.1' : s.ms.toFixed(1)} ms · wasm-simulated`,
+      showAdsVal: this.props.showAds ?? false
+    };
+  }
+}
+</script>
+</body>
+</html>

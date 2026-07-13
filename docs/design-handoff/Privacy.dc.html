@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — diff.wtf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0a0d11;color:#e6edf3}
+a{color:#3fd68f;text-decoration:none}
+a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="min-height:100vh;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0a0d11;display:flex;flex-direction:column" data-screen-label="Privacy">
+  <header style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid #1a212b">
+    <a href="Diff Checker.dc.html" style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:#e6edf3" style-hover="text-decoration:none">diff<span style="color:#3fd68f">.wtf</span></a>
+    <a href="Diff Checker.dc.html" style="font-size:13px;color:#8b98a9" style-hover="color:#e6edf3">← back to the tool</a>
+  </header>
+  <main style="max-width:640px;margin:0 auto;padding:48px 24px 64px;flex:1">
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:32px;margin:0 0 6px">Privacy</h1>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#46515f;margin:0 0 32px">Last updated: July 2026</p>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin:0 0 8px">Your text never leaves your browser</h2>
+    <p style="color:#a9b4c0;font-size:14px;line-height:1.7;margin:0 0 28px">diff.wtf runs entirely on your device. The text and files you compare are processed locally by a WebAssembly module — they are never uploaded, transmitted, stored, or logged. There is no server that could receive them. Closing the tab erases everything.</p>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin:0 0 8px">What we do collect</h2>
+    <p style="color:#a9b4c0;font-size:14px;line-height:1.7;margin:0 0 28px">Anonymous, aggregate page analytics (page views, country, browser) with no cookies and no personal identifiers. We never see the content you diff.</p>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin:0 0 8px">Advertising</h2>
+    <p style="color:#a9b4c0;font-size:14px;line-height:1.7;margin:0 0 28px">The free version shows ads served by third-party networks (Google AdSense, Carbon Ads). These networks may use cookies for ad personalization as described in their own policies; they have no access to your diff content. You can opt out of personalized ads via <a href="https://adssettings.google.com">Google Ad Settings</a>.</p>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin:0 0 8px">Questions</h2>
+    <p style="color:#a9b4c0;font-size:14px;line-height:1.7;margin:0">Email <a href="mailto:privacy@diff.wtf">privacy@diff.wtf</a>, or read the source — the diff engine is <a href="#">open source</a>, so you don't have to take our word for any of this.</p>
+  </main>
+  <footer style="border-top:1px solid #1a212b;padding:20px 28px;font-size:12px;color:#46515f">© 2026 diff.wtf · MIT-licensed engine</footer>
+</div>
+</x-dc>
+</body>
+</html>
