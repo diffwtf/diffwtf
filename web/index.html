@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>diff.wtf — the fastest diff checker on the web</title>
+<meta name="description" content="Compare text and files instantly. Rust → WebAssembly diff checker that runs 100% in your browser — no uploads, no servers, no limits.">
+<meta property="og:title" content="diff.wtf — the fastest diff checker on the web">
+<meta property="og:description" content="Rust → WASM diff. 50–100× faster than JS tools. Your text never leaves your browser.">
+<meta property="og:image" content="og-card.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <span class="wordmark">diff<span class="accent">.wtf</span><span class="cursor">_</span></span>
+  </div>
+  <nav class="site-nav">
+    <a class="nav-link" href="#how">Why it's fast</a>
+    <a class="btn-github" href="https://github.com/diffwtf/diffwtf">Star on GitHub</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>The fastest diff on the web.</h1>
+  <p>Rust → WebAssembly · runs entirely in your browser · nothing is ever uploaded</p>
+</div>
+
+<main class="tool">
+  <div class="panes">
+    <section class="pane">
+      <div class="pane-labels">
+        <span class="pane-name">ORIGINAL</span>
+        <span class="pane-count" id="left-count">0 chars · or drop a file</span>
+      </div>
+      <div class="pane-input" id="left-pane">
+        <textarea id="left-text" spellcheck="false" placeholder="Paste original text… or drop a file"></textarea>
+        <div class="drop-overlay"><span>drop file to load</span></div>
+      </div>
+    </section>
+    <section class="pane">
+      <div class="pane-labels">
+        <span class="pane-name">CHANGED</span>
+        <span class="pane-count" id="right-count">0 chars · or drop a file</span>
+      </div>
+      <div class="pane-input" id="right-pane">
+        <textarea id="right-text" spellcheck="false" placeholder="Paste changed text… or drop a file"></textarea>
+        <div class="drop-overlay"><span>drop file to load</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="privacy-note">// nothing you paste or drop ever leaves this tab — the diff runs locally</div>
+
+  <div class="controls">
+    <div class="segmented" role="group" aria-label="Diff view">
+      <button type="button" id="btn-split" class="active" disabled>Split</button>
+      <button type="button" id="btn-unified" disabled>Unified</button>
+    </div>
+    <div class="segmented" role="group" aria-label="Highlight granularity">
+      <button type="button" id="btn-word" class="active" disabled>Word</button>
+      <button type="button" id="btn-char" disabled>Character</button>
+    </div>
+    <button type="button" id="btn-example" class="btn-ghost" disabled>Load example</button>
+    <button type="button" id="btn-clear" class="btn-ghost" disabled>Clear</button>
+    <div class="spacer"></div>
+    <span class="perf-badge"><span class="perf-dot"></span><span id="perf-text">loading engine…</span></span>
+  </div>
+
+  <div class="ad-slot" hidden>
+    <span>728×90 · AdSense / Carbon slot</span>
+  </div>
+
+  <section class="results" aria-label="Diff result">
+    <div class="results-header">
+      <span class="stat-added" id="stat-added">+0</span>
+      <span class="stat-removed" id="stat-removed">−0</span>
+      <span class="results-label" id="results-label">paste text above to see the diff</span>
+      <div class="spacer"></div>
+      <button type="button" class="btn-pro">Export PDF <span class="pro-chip">PRO</span></button>
+      <button type="button" class="btn-pro">AI summary <span class="pro-chip">PRO</span></button>
+    </div>
+    <div class="diff-body" id="diff-body" hidden></div>
+  </section>
+</main>
+
+<section id="how" class="how">
+  <div class="how-grid">
+    <div class="card">
+      <h3>50–100× faster</h3>
+      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. Large documents diff in milliseconds, not seconds.</p>
+      <div class="chart">
+        <div class="chart-bar">
+          <div class="chart-labels"><span>diff.wtf (WASM)</span><span class="accent">4 ms</span></div>
+          <div class="chart-track"><div class="chart-fill wasm"></div></div>
+        </div>
+        <div class="chart-bar">
+          <div class="chart-labels"><span>typical JS diff tool</span><span>~210 ms</span></div>
+          <div class="chart-track"><div class="chart-fill js"></div></div>
+        </div>
+        <span class="chart-caption">1 MB text, line diff — illustrative benchmark</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Your text never leaves the browser</h3>
+      <p>100% client-side. No uploads, no servers, no logs. Diff contracts, source code, or anything confidential with zero exposure. Works offline once loaded.</p>
+    </div>
+    <div class="card">
+      <h3>Open source core</h3>
+      <p class="chip-intro">The Rust diff engine is MIT-licensed. Audit it, embed it, or use it via the upcoming Diff API.</p>
+      <span class="code-chip">$ cargo add diffwtf-core</span>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <span>© 2026 diff.wtf · MIT-licensed engine</span>
+  <div class="footer-links">
+    <a href="https://github.com/diffwtf/diffwtf">GitHub</a>
+    <!-- No public API exists yet; the pre-launch checklist owns this link's fate
+         (point at the repo or drop it). Until decided it goes to the repo. -->
+    <a href="https://github.com/diffwtf/diffwtf">API</a>
+    <a href="privacy.html">Privacy</a>
+  </div>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
