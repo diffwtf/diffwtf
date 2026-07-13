@@ -573,3 +573,108 @@ body.privacy {
   font-size: 12px;
   color: #46515f;
 }
+
+/*
+ * Responsive (DECISIONS.md D5). The design handoff is desktop only; the rules
+ * below define mobile behavior and are scoped so viewports from 768px up keep
+ * the exact design rendering.
+ */
+
+@media (max-width: 767.98px) {
+  /* Hero scales down; the heading holds at most two balanced lines at 390px. */
+  .hero h1 {
+    font-size: clamp(28px, 8.5vw, 42px);
+    text-wrap: balance;
+  }
+  .hero p {
+    font-size: 13.5px;
+  }
+
+  /* Panes stack, ORIGINAL above CHANGED, each full width. */
+  .panes {
+    grid-template-columns: 1fr;
+  }
+
+  /* Label left, counter right, one row, with a real gap between them. */
+  .pane-labels {
+    gap: 10px;
+  }
+  .pane-count {
+    white-space: nowrap;
+  }
+
+  /* Toolbar wrap order: both toggles on one row, Load example and Clear on
+     the next, status badge on its own line at the right edge. */
+  .controls {
+    display: grid;
+    grid-template-columns: max-content max-content 1fr;
+  }
+  .controls > * {
+    justify-self: start;
+  }
+  #btn-example {
+    grid-row: 2;
+    grid-column: 1;
+  }
+  #btn-clear {
+    grid-row: 2;
+    grid-column: 2;
+  }
+  .controls .spacer {
+    display: none;
+  }
+  .perf-badge {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  /* Unified fits without horizontal scroll; split keeps readable columns and
+     scrolls horizontally inside the results panel instead of overlapping. */
+  .diff-body {
+    overflow-x: auto;
+  }
+  .row-split {
+    min-width: 640px;
+  }
+
+  /* Feature cards stack in a single column. */
+  .how-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Benchmark rows harden whenever the cards get narrow (three-across cards are
+   tight up to 1023px; the desktop-identical guarantee starts at 1024px): the
+   value stays whole and right aligned, the label wraps as a block, and the
+   two never interleave. */
+@media (max-width: 1023.98px) {
+  .chart-labels {
+    gap: 10px;
+  }
+  .chart-labels span:first-child {
+    min-width: 0;
+  }
+  .chart-labels span:last-child {
+    flex-shrink: 0;
+    white-space: nowrap;
+    text-align: right;
+  }
+}
+
+/* Very narrow screens: tighter segment padding so both toggles share a row
+   down to 320px wide. */
+@media (max-width: 359.98px) {
+  .segmented button {
+    padding: 6px 9px;
+  }
+}
+
+/* Touch devices get no drag and drop affordances (DECISIONS.md D5); the copy
+   changes live in app.js against the same media query. */
+@media (hover: none) {
+  .drop-overlay,
+  .pane-input.dragover .drop-overlay {
+    display: none;
+  }
+}

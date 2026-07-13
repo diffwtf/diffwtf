@@ -1,5 +1,25 @@
 # DECISIONS
 
+## D5: Responsive behavior (M6 follow-up)
+The design handoff is desktop only; this entry defines mobile (Alex-authorized
+scope, 2026-07). Desktop stays pixel-faithful: rendering at 1024px and up is
+unchanged, verified by an element-by-element computed-style and geometry
+comparison against the pre-change build. Below 768px: the input panes stack
+(ORIGINAL above CHANGED, full width), Unified is the default view when the
+user has no stored preference (a stored preference always wins; Split stays
+selectable and scrolls horizontally inside the results panel), the toolbar
+wraps in a fixed order (toggles, then Load example and Clear, then the status
+badge right-aligned on its own line), and the hero scales down. Touch devices
+(hover: none) do not advertise drag-drop: the overlay is suppressed and the
+hint copy drops "or drop a file". Benchmark card rows are hardened below
+1024px (the width where three-across cards get narrow) so the value never
+wraps or interleaves with the label. Live diff on every input applies on all
+viewports; there is no compute button anywhere.
+Deliberate divergences from competitor patterns: no Find-difference button
+(the engine is fast enough for live), and session-content restore is deferred
+to a tracked issue for privacy reasons (the product promises pasted text has
+zero exposure, so persisting it on disk must be opt-in or clearly disclosed).
+
 ## D4: PRO teaser buttons removed pre-launch (M6 follow-up)
 The design handoff includes two non-functional teaser buttons in the results
 toolbar, Export PDF (PRO) and AI summary (PRO). Both are removed for launch by

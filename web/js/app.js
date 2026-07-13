@@ -31,10 +31,18 @@ const storage = {
   },
 };
 
+// A stored view preference always wins; with none stored, narrow viewports
+// default to Unified and wider ones to the design's Split (DECISIONS.md D5).
+const storedView = storage.get(VIEW_KEY);
+
 const state = {
   left: '',
   right: '',
-  view: storage.get(VIEW_KEY) === 'unified' ? 'unified' : 'split',
+  view: storedView === 'unified' || storedView === 'split'
+    ? storedView
+    : window.matchMedia('(max-width: 767.98px)').matches
+      ? 'unified'
+      : 'split',
   gran: storage.get(GRAN_KEY) === 'char' ? 'char' : 'word',
 };
 
@@ -66,9 +74,25 @@ function formatMs(ms) {
   return ms < 0.1 ? '<0.1' : ms.toFixed(1);
 }
 
+// Touch devices (hover: none) do not advertise drag and drop (DECISIONS.md
+// D5): the counter suffix and the placeholders drop "or drop a file". The
+// overlay is hidden by CSS; the drag listeners stay wired and are harmless.
+const touchInput = window.matchMedia('(hover: none)');
+
 function updateCounts() {
-  leftCount.textContent = `${state.left.length.toLocaleString()} chars · or drop a file`;
-  rightCount.textContent = `${state.right.length.toLocaleString()} chars · or drop a file`;
+  const suffix = touchInput.matches ? ' chars' : ' chars · or drop a file';
+  leftCount.textContent = `${state.left.length.toLocaleString()}${suffix}`;
+  rightCount.textContent = `${state.right.length.toLocaleString()}${suffix}`;
+}
+
+function applyInputHints() {
+  leftText.placeholder = touchInput.matches
+    ? 'Paste original text…'
+    : 'Paste original text… or drop a file';
+  rightText.placeholder = touchInput.matches
+    ? 'Paste changed text…'
+    : 'Paste changed text… or drop a file';
+  updateCounts();
 }
 
 function syncToggles() {
@@ -235,8 +259,10 @@ btnChar.addEventListener('click', () => setGran('char'));
 btnExample.addEventListener('click', () => setTexts(sampleA, sampleB));
 btnClear.addEventListener('click', () => setTexts('', ''));
 
+touchInput.addEventListener('change', applyInputHints);
+
 syncToggles();
-updateCounts();
+applyInputHints();
 
 try {
   await init();
