@@ -3,6 +3,7 @@
 
 mod intraline;
 mod lcs;
+mod myers;
 
 use lcs::Op;
 
@@ -105,7 +106,7 @@ pub fn diff(left: &str, right: &str, granularity: Granularity) -> DiffResult {
 
     let left_lines: Vec<&str> = left.split('\n').collect();
     let right_lines: Vec<&str> = right.split('\n').collect();
-    let ops = lcs::lcs(&left_lines, &right_lines);
+    let ops = myers::diff_slices(&left_lines, &right_lines);
 
     let mut rows = Vec::new();
     let mut unified = Vec::new();
