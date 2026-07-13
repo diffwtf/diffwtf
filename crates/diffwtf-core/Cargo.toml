@@ -16,7 +16,12 @@ serde = { version = "1", features = ["derive"], optional = true }
 [dev-dependencies]
 diffwtf-core = { path = ".", features = ["serde"] }
 serde_json = "1"
+criterion = "0.5"
 
 [features]
 default = []
 serde = ["dep:serde"]
+
+[[bench]]
+name = "diff"
+harness = false

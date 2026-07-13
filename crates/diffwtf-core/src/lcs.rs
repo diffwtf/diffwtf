@@ -1,7 +1,13 @@
-//! Line/token-level LCS diff — a 1:1 port of the reference `lcs()` in
+//! Token-level LCS diff, a 1:1 port of the reference `lcs()` in
 //! `docs/design-handoff/Diff Checker.dc.html`: common prefix/suffix trimming,
 //! an LCS DP table over the middle, and a >600 000-cell bailout to naive
-//! del-all/ins-all. Replaced by Myers O(ND) in a later milestone.
+//! del-all/ins-all.
+//!
+//! Since M4 this runs only on intra-line token streams (`intraline.rs`),
+//! where inputs are small; the line level uses Myers O(ND) in `myers.rs`.
+//! The bailout stays here deliberately: the reference applies it inside
+//! `intraDiff` too, so a pathological single line (token product over
+//! 600 000) must degrade the same way to stay conformant.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum Op {
