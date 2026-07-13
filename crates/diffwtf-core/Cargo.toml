@@ -11,6 +11,12 @@ repository.workspace = true
 [dependencies]
 serde = { version = "1", features = ["derive"], optional = true }
 
+# Self-dependency so plain `cargo test` compiles the conformance suite with the
+# `serde` feature on, without turning it on for library consumers.
+[dev-dependencies]
+diffwtf-core = { path = ".", features = ["serde"] }
+serde_json = "1"
+
 [features]
 default = []
 serde = ["dep:serde"]

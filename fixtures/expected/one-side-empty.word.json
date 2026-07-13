@@ -1,0 +1,90 @@
+{
+  "rows": [
+    {
+      "kind": "modify",
+      "left": {
+        "number": 1,
+        "segments": []
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "alpha",
+            "highlighted": true
+          }
+        ]
+      }
+    },
+    {
+      "kind": "insert",
+      "left": null,
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "beta",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "insert",
+      "left": null,
+      "right": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "gamma",
+            "highlighted": false
+          }
+        ]
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "delete",
+      "old_number": 1,
+      "new_number": null,
+      "segments": []
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "alpha",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "beta",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 3,
+      "segments": [
+        {
+          "text": "gamma",
+          "highlighted": false
+        }
+      ]
+    }
+  ],
+  "added": 3,
+  "removed": 1,
+  "line_count": 3
+}

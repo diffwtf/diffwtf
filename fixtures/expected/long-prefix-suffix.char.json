@@ -1,0 +1,2776 @@
+{
+  "rows": [
+    {
+      "kind": "equal",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "prefix line 1: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "prefix line 1: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "prefix line 2: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "prefix line 2: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "prefix line 3: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "prefix line 3: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 4,
+        "segments": [
+          {
+            "text": "prefix line 4: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 4,
+        "segments": [
+          {
+            "text": "prefix line 4: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 5,
+        "segments": [
+          {
+            "text": "prefix line 5: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 5,
+        "segments": [
+          {
+            "text": "prefix line 5: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 6,
+        "segments": [
+          {
+            "text": "prefix line 6: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 6,
+        "segments": [
+          {
+            "text": "prefix line 6: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 7,
+        "segments": [
+          {
+            "text": "prefix line 7: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 7,
+        "segments": [
+          {
+            "text": "prefix line 7: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 8,
+        "segments": [
+          {
+            "text": "prefix line 8: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 8,
+        "segments": [
+          {
+            "text": "prefix line 8: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 9,
+        "segments": [
+          {
+            "text": "prefix line 9: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 9,
+        "segments": [
+          {
+            "text": "prefix line 9: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 10,
+        "segments": [
+          {
+            "text": "prefix line 10: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 10,
+        "segments": [
+          {
+            "text": "prefix line 10: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 11,
+        "segments": [
+          {
+            "text": "prefix line 11: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 11,
+        "segments": [
+          {
+            "text": "prefix line 11: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 12,
+        "segments": [
+          {
+            "text": "prefix line 12: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 12,
+        "segments": [
+          {
+            "text": "prefix line 12: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 13,
+        "segments": [
+          {
+            "text": "prefix line 13: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 13,
+        "segments": [
+          {
+            "text": "prefix line 13: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 14,
+        "segments": [
+          {
+            "text": "prefix line 14: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 14,
+        "segments": [
+          {
+            "text": "prefix line 14: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 15,
+        "segments": [
+          {
+            "text": "prefix line 15: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 15,
+        "segments": [
+          {
+            "text": "prefix line 15: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 16,
+        "segments": [
+          {
+            "text": "prefix line 16: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 16,
+        "segments": [
+          {
+            "text": "prefix line 16: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 17,
+        "segments": [
+          {
+            "text": "prefix line 17: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 17,
+        "segments": [
+          {
+            "text": "prefix line 17: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 18,
+        "segments": [
+          {
+            "text": "prefix line 18: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 18,
+        "segments": [
+          {
+            "text": "prefix line 18: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 19,
+        "segments": [
+          {
+            "text": "prefix line 19: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 19,
+        "segments": [
+          {
+            "text": "prefix line 19: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 20,
+        "segments": [
+          {
+            "text": "prefix line 20: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 20,
+        "segments": [
+          {
+            "text": "prefix line 20: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 21,
+        "segments": [
+          {
+            "text": "prefix line 21: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 21,
+        "segments": [
+          {
+            "text": "prefix line 21: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 22,
+        "segments": [
+          {
+            "text": "prefix line 22: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 22,
+        "segments": [
+          {
+            "text": "prefix line 22: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 23,
+        "segments": [
+          {
+            "text": "prefix line 23: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 23,
+        "segments": [
+          {
+            "text": "prefix line 23: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 24,
+        "segments": [
+          {
+            "text": "prefix line 24: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 24,
+        "segments": [
+          {
+            "text": "prefix line 24: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 25,
+        "segments": [
+          {
+            "text": "prefix line 25: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 25,
+        "segments": [
+          {
+            "text": "prefix line 25: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 26,
+        "segments": [
+          {
+            "text": "prefix line 26: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 26,
+        "segments": [
+          {
+            "text": "prefix line 26: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 27,
+        "segments": [
+          {
+            "text": "prefix line 27: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 27,
+        "segments": [
+          {
+            "text": "prefix line 27: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 28,
+        "segments": [
+          {
+            "text": "prefix line 28: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 28,
+        "segments": [
+          {
+            "text": "prefix line 28: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 29,
+        "segments": [
+          {
+            "text": "prefix line 29: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 29,
+        "segments": [
+          {
+            "text": "prefix line 29: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 30,
+        "segments": [
+          {
+            "text": "prefix line 30: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 30,
+        "segments": [
+          {
+            "text": "prefix line 30: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 31,
+        "segments": [
+          {
+            "text": "prefix line 31: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 31,
+        "segments": [
+          {
+            "text": "prefix line 31: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 32,
+        "segments": [
+          {
+            "text": "prefix line 32: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 32,
+        "segments": [
+          {
+            "text": "prefix line 32: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 33,
+        "segments": [
+          {
+            "text": "prefix line 33: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 33,
+        "segments": [
+          {
+            "text": "prefix line 33: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 34,
+        "segments": [
+          {
+            "text": "prefix line 34: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 34,
+        "segments": [
+          {
+            "text": "prefix line 34: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 35,
+        "segments": [
+          {
+            "text": "prefix line 35: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 35,
+        "segments": [
+          {
+            "text": "prefix line 35: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 36,
+        "segments": [
+          {
+            "text": "prefix line 36: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 36,
+        "segments": [
+          {
+            "text": "prefix line 36: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 37,
+        "segments": [
+          {
+            "text": "prefix line 37: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 37,
+        "segments": [
+          {
+            "text": "prefix line 37: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 38,
+        "segments": [
+          {
+            "text": "prefix line 38: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 38,
+        "segments": [
+          {
+            "text": "prefix line 38: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 39,
+        "segments": [
+          {
+            "text": "prefix line 39: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 39,
+        "segments": [
+          {
+            "text": "prefix line 39: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 40,
+        "segments": [
+          {
+            "text": "prefix line 40: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 40,
+        "segments": [
+          {
+            "text": "prefix line 40: the same on both sides",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 41,
+        "segments": [
+          {
+            "text": "value = ",
+            "highlighted": false
+          },
+          {
+            "text": "1",
+            "highlighted": true
+          },
+          {
+            "text": "00",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 41,
+        "segments": [
+          {
+            "text": "value = ",
+            "highlighted": false
+          },
+          {
+            "text": "2",
+            "highlighted": true
+          },
+          {
+            "text": "00",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 42,
+        "segments": [
+          {
+            "text": "mode: ",
+            "highlighted": false
+          },
+          {
+            "text": "l",
+            "highlighted": true
+          },
+          {
+            "text": "e",
+            "highlighted": false
+          },
+          {
+            "text": "gacy",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 42,
+        "segments": [
+          {
+            "text": "mode: ",
+            "highlighted": false
+          },
+          {
+            "text": "mod",
+            "highlighted": true
+          },
+          {
+            "text": "e",
+            "highlighted": false
+          },
+          {
+            "text": "rn",
+            "highlighted": true
+          }
+        ]
+      }
+    },
+    {
+      "kind": "insert",
+      "left": null,
+      "right": {
+        "number": 43,
+        "segments": [
+          {
+            "text": "extra: enabled",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 43,
+        "segments": [
+          {
+            "text": "suffix line 1: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 44,
+        "segments": [
+          {
+            "text": "suffix line 1: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 44,
+        "segments": [
+          {
+            "text": "suffix line 2: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 45,
+        "segments": [
+          {
+            "text": "suffix line 2: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 45,
+        "segments": [
+          {
+            "text": "suffix line 3: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 46,
+        "segments": [
+          {
+            "text": "suffix line 3: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 46,
+        "segments": [
+          {
+            "text": "suffix line 4: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 47,
+        "segments": [
+          {
+            "text": "suffix line 4: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 47,
+        "segments": [
+          {
+            "text": "suffix line 5: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 48,
+        "segments": [
+          {
+            "text": "suffix line 5: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 48,
+        "segments": [
+          {
+            "text": "suffix line 6: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 49,
+        "segments": [
+          {
+            "text": "suffix line 6: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 49,
+        "segments": [
+          {
+            "text": "suffix line 7: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 50,
+        "segments": [
+          {
+            "text": "suffix line 7: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 50,
+        "segments": [
+          {
+            "text": "suffix line 8: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 51,
+        "segments": [
+          {
+            "text": "suffix line 8: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 51,
+        "segments": [
+          {
+            "text": "suffix line 9: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 52,
+        "segments": [
+          {
+            "text": "suffix line 9: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 52,
+        "segments": [
+          {
+            "text": "suffix line 10: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 53,
+        "segments": [
+          {
+            "text": "suffix line 10: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 53,
+        "segments": [
+          {
+            "text": "suffix line 11: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 54,
+        "segments": [
+          {
+            "text": "suffix line 11: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 54,
+        "segments": [
+          {
+            "text": "suffix line 12: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 55,
+        "segments": [
+          {
+            "text": "suffix line 12: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 55,
+        "segments": [
+          {
+            "text": "suffix line 13: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 56,
+        "segments": [
+          {
+            "text": "suffix line 13: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 56,
+        "segments": [
+          {
+            "text": "suffix line 14: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 57,
+        "segments": [
+          {
+            "text": "suffix line 14: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 57,
+        "segments": [
+          {
+            "text": "suffix line 15: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 58,
+        "segments": [
+          {
+            "text": "suffix line 15: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 58,
+        "segments": [
+          {
+            "text": "suffix line 16: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 59,
+        "segments": [
+          {
+            "text": "suffix line 16: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 59,
+        "segments": [
+          {
+            "text": "suffix line 17: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 60,
+        "segments": [
+          {
+            "text": "suffix line 17: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 60,
+        "segments": [
+          {
+            "text": "suffix line 18: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 61,
+        "segments": [
+          {
+            "text": "suffix line 18: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 61,
+        "segments": [
+          {
+            "text": "suffix line 19: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 62,
+        "segments": [
+          {
+            "text": "suffix line 19: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 62,
+        "segments": [
+          {
+            "text": "suffix line 20: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 63,
+        "segments": [
+          {
+            "text": "suffix line 20: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 63,
+        "segments": [
+          {
+            "text": "suffix line 21: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 64,
+        "segments": [
+          {
+            "text": "suffix line 21: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 64,
+        "segments": [
+          {
+            "text": "suffix line 22: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 65,
+        "segments": [
+          {
+            "text": "suffix line 22: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 65,
+        "segments": [
+          {
+            "text": "suffix line 23: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 66,
+        "segments": [
+          {
+            "text": "suffix line 23: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 66,
+        "segments": [
+          {
+            "text": "suffix line 24: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 67,
+        "segments": [
+          {
+            "text": "suffix line 24: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 67,
+        "segments": [
+          {
+            "text": "suffix line 25: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 68,
+        "segments": [
+          {
+            "text": "suffix line 25: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 68,
+        "segments": [
+          {
+            "text": "suffix line 26: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 69,
+        "segments": [
+          {
+            "text": "suffix line 26: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 69,
+        "segments": [
+          {
+            "text": "suffix line 27: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 70,
+        "segments": [
+          {
+            "text": "suffix line 27: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 70,
+        "segments": [
+          {
+            "text": "suffix line 28: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 71,
+        "segments": [
+          {
+            "text": "suffix line 28: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 71,
+        "segments": [
+          {
+            "text": "suffix line 29: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 72,
+        "segments": [
+          {
+            "text": "suffix line 29: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 72,
+        "segments": [
+          {
+            "text": "suffix line 30: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 73,
+        "segments": [
+          {
+            "text": "suffix line 30: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 73,
+        "segments": [
+          {
+            "text": "suffix line 31: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 74,
+        "segments": [
+          {
+            "text": "suffix line 31: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 74,
+        "segments": [
+          {
+            "text": "suffix line 32: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 75,
+        "segments": [
+          {
+            "text": "suffix line 32: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 75,
+        "segments": [
+          {
+            "text": "suffix line 33: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 76,
+        "segments": [
+          {
+            "text": "suffix line 33: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 76,
+        "segments": [
+          {
+            "text": "suffix line 34: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 77,
+        "segments": [
+          {
+            "text": "suffix line 34: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 77,
+        "segments": [
+          {
+            "text": "suffix line 35: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 78,
+        "segments": [
+          {
+            "text": "suffix line 35: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 78,
+        "segments": [
+          {
+            "text": "suffix line 36: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 79,
+        "segments": [
+          {
+            "text": "suffix line 36: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 79,
+        "segments": [
+          {
+            "text": "suffix line 37: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 80,
+        "segments": [
+          {
+            "text": "suffix line 37: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 80,
+        "segments": [
+          {
+            "text": "suffix line 38: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 81,
+        "segments": [
+          {
+            "text": "suffix line 38: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 81,
+        "segments": [
+          {
+            "text": "suffix line 39: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 82,
+        "segments": [
+          {
+            "text": "suffix line 39: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 82,
+        "segments": [
+          {
+            "text": "suffix line 40: identical tail content",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 83,
+        "segments": [
+          {
+            "text": "suffix line 40: identical tail content",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 83,
+        "segments": []
+      },
+      "right": {
+        "number": 84,
+        "segments": []
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "equal",
+      "old_number": 1,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "prefix line 1: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 2,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "prefix line 2: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 3,
+      "new_number": 3,
+      "segments": [
+        {
+          "text": "prefix line 3: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 4,
+      "new_number": 4,
+      "segments": [
+        {
+          "text": "prefix line 4: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 5,
+      "new_number": 5,
+      "segments": [
+        {
+          "text": "prefix line 5: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 6,
+      "new_number": 6,
+      "segments": [
+        {
+          "text": "prefix line 6: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 7,
+      "new_number": 7,
+      "segments": [
+        {
+          "text": "prefix line 7: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 8,
+      "new_number": 8,
+      "segments": [
+        {
+          "text": "prefix line 8: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 9,
+      "new_number": 9,
+      "segments": [
+        {
+          "text": "prefix line 9: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 10,
+      "new_number": 10,
+      "segments": [
+        {
+          "text": "prefix line 10: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 11,
+      "new_number": 11,
+      "segments": [
+        {
+          "text": "prefix line 11: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 12,
+      "new_number": 12,
+      "segments": [
+        {
+          "text": "prefix line 12: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 13,
+      "new_number": 13,
+      "segments": [
+        {
+          "text": "prefix line 13: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 14,
+      "new_number": 14,
+      "segments": [
+        {
+          "text": "prefix line 14: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 15,
+      "new_number": 15,
+      "segments": [
+        {
+          "text": "prefix line 15: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 16,
+      "new_number": 16,
+      "segments": [
+        {
+          "text": "prefix line 16: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 17,
+      "new_number": 17,
+      "segments": [
+        {
+          "text": "prefix line 17: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 18,
+      "new_number": 18,
+      "segments": [
+        {
+          "text": "prefix line 18: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 19,
+      "new_number": 19,
+      "segments": [
+        {
+          "text": "prefix line 19: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 20,
+      "new_number": 20,
+      "segments": [
+        {
+          "text": "prefix line 20: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 21,
+      "new_number": 21,
+      "segments": [
+        {
+          "text": "prefix line 21: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 22,
+      "new_number": 22,
+      "segments": [
+        {
+          "text": "prefix line 22: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 23,
+      "new_number": 23,
+      "segments": [
+        {
+          "text": "prefix line 23: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 24,
+      "new_number": 24,
+      "segments": [
+        {
+          "text": "prefix line 24: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 25,
+      "new_number": 25,
+      "segments": [
+        {
+          "text": "prefix line 25: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 26,
+      "new_number": 26,
+      "segments": [
+        {
+          "text": "prefix line 26: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 27,
+      "new_number": 27,
+      "segments": [
+        {
+          "text": "prefix line 27: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 28,
+      "new_number": 28,
+      "segments": [
+        {
+          "text": "prefix line 28: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 29,
+      "new_number": 29,
+      "segments": [
+        {
+          "text": "prefix line 29: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 30,
+      "new_number": 30,
+      "segments": [
+        {
+          "text": "prefix line 30: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 31,
+      "new_number": 31,
+      "segments": [
+        {
+          "text": "prefix line 31: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 32,
+      "new_number": 32,
+      "segments": [
+        {
+          "text": "prefix line 32: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 33,
+      "new_number": 33,
+      "segments": [
+        {
+          "text": "prefix line 33: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 34,
+      "new_number": 34,
+      "segments": [
+        {
+          "text": "prefix line 34: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 35,
+      "new_number": 35,
+      "segments": [
+        {
+          "text": "prefix line 35: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 36,
+      "new_number": 36,
+      "segments": [
+        {
+          "text": "prefix line 36: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 37,
+      "new_number": 37,
+      "segments": [
+        {
+          "text": "prefix line 37: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 38,
+      "new_number": 38,
+      "segments": [
+        {
+          "text": "prefix line 38: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 39,
+      "new_number": 39,
+      "segments": [
+        {
+          "text": "prefix line 39: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 40,
+      "new_number": 40,
+      "segments": [
+        {
+          "text": "prefix line 40: the same on both sides",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 41,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "value = ",
+          "highlighted": false
+        },
+        {
+          "text": "1",
+          "highlighted": true
+        },
+        {
+          "text": "00",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 42,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "mode: ",
+          "highlighted": false
+        },
+        {
+          "text": "l",
+          "highlighted": true
+        },
+        {
+          "text": "e",
+          "highlighted": false
+        },
+        {
+          "text": "gacy",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 41,
+      "segments": [
+        {
+          "text": "value = ",
+          "highlighted": false
+        },
+        {
+          "text": "2",
+          "highlighted": true
+        },
+        {
+          "text": "00",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 42,
+      "segments": [
+        {
+          "text": "mode: ",
+          "highlighted": false
+        },
+        {
+          "text": "mod",
+          "highlighted": true
+        },
+        {
+          "text": "e",
+          "highlighted": false
+        },
+        {
+          "text": "rn",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 43,
+      "segments": [
+        {
+          "text": "extra: enabled",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 43,
+      "new_number": 44,
+      "segments": [
+        {
+          "text": "suffix line 1: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 44,
+      "new_number": 45,
+      "segments": [
+        {
+          "text": "suffix line 2: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 45,
+      "new_number": 46,
+      "segments": [
+        {
+          "text": "suffix line 3: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 46,
+      "new_number": 47,
+      "segments": [
+        {
+          "text": "suffix line 4: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 47,
+      "new_number": 48,
+      "segments": [
+        {
+          "text": "suffix line 5: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 48,
+      "new_number": 49,
+      "segments": [
+        {
+          "text": "suffix line 6: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 49,
+      "new_number": 50,
+      "segments": [
+        {
+          "text": "suffix line 7: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 50,
+      "new_number": 51,
+      "segments": [
+        {
+          "text": "suffix line 8: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 51,
+      "new_number": 52,
+      "segments": [
+        {
+          "text": "suffix line 9: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 52,
+      "new_number": 53,
+      "segments": [
+        {
+          "text": "suffix line 10: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 53,
+      "new_number": 54,
+      "segments": [
+        {
+          "text": "suffix line 11: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 54,
+      "new_number": 55,
+      "segments": [
+        {
+          "text": "suffix line 12: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 55,
+      "new_number": 56,
+      "segments": [
+        {
+          "text": "suffix line 13: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 56,
+      "new_number": 57,
+      "segments": [
+        {
+          "text": "suffix line 14: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 57,
+      "new_number": 58,
+      "segments": [
+        {
+          "text": "suffix line 15: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 58,
+      "new_number": 59,
+      "segments": [
+        {
+          "text": "suffix line 16: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 59,
+      "new_number": 60,
+      "segments": [
+        {
+          "text": "suffix line 17: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 60,
+      "new_number": 61,
+      "segments": [
+        {
+          "text": "suffix line 18: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 61,
+      "new_number": 62,
+      "segments": [
+        {
+          "text": "suffix line 19: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 62,
+      "new_number": 63,
+      "segments": [
+        {
+          "text": "suffix line 20: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 63,
+      "new_number": 64,
+      "segments": [
+        {
+          "text": "suffix line 21: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 64,
+      "new_number": 65,
+      "segments": [
+        {
+          "text": "suffix line 22: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 65,
+      "new_number": 66,
+      "segments": [
+        {
+          "text": "suffix line 23: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 66,
+      "new_number": 67,
+      "segments": [
+        {
+          "text": "suffix line 24: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 67,
+      "new_number": 68,
+      "segments": [
+        {
+          "text": "suffix line 25: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 68,
+      "new_number": 69,
+      "segments": [
+        {
+          "text": "suffix line 26: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 69,
+      "new_number": 70,
+      "segments": [
+        {
+          "text": "suffix line 27: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 70,
+      "new_number": 71,
+      "segments": [
+        {
+          "text": "suffix line 28: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 71,
+      "new_number": 72,
+      "segments": [
+        {
+          "text": "suffix line 29: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 72,
+      "new_number": 73,
+      "segments": [
+        {
+          "text": "suffix line 30: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 73,
+      "new_number": 74,
+      "segments": [
+        {
+          "text": "suffix line 31: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 74,
+      "new_number": 75,
+      "segments": [
+        {
+          "text": "suffix line 32: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 75,
+      "new_number": 76,
+      "segments": [
+        {
+          "text": "suffix line 33: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 76,
+      "new_number": 77,
+      "segments": [
+        {
+          "text": "suffix line 34: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 77,
+      "new_number": 78,
+      "segments": [
+        {
+          "text": "suffix line 35: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 78,
+      "new_number": 79,
+      "segments": [
+        {
+          "text": "suffix line 36: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 79,
+      "new_number": 80,
+      "segments": [
+        {
+          "text": "suffix line 37: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 80,
+      "new_number": 81,
+      "segments": [
+        {
+          "text": "suffix line 38: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 81,
+      "new_number": 82,
+      "segments": [
+        {
+          "text": "suffix line 39: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 82,
+      "new_number": 83,
+      "segments": [
+        {
+          "text": "suffix line 40: identical tail content",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 83,
+      "new_number": 84,
+      "segments": []
+    }
+  ],
+  "added": 3,
+  "removed": 2,
+  "line_count": 84
+}

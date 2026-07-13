@@ -1,0 +1,6 @@
+fn main() {
+    let greeting = "hello, diff";
+    println!("{greeting}");
+
+    // trailing comment
+}

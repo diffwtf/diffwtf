@@ -1,0 +1,203 @@
+{
+  "rows": [
+    {
+      "kind": "equal",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "fn main() {",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "fn main() {",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "    let greeting = \"hello, diff\";",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "    let greeting = \"hello, diff\";",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "    println!(\"{greeting}\");",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "    println!(\"{greeting}\");",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 4,
+        "segments": []
+      },
+      "right": {
+        "number": 4,
+        "segments": []
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 5,
+        "segments": [
+          {
+            "text": "    // trailing comment",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 5,
+        "segments": [
+          {
+            "text": "    // trailing comment",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 6,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 6,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 7,
+        "segments": []
+      },
+      "right": {
+        "number": 7,
+        "segments": []
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "equal",
+      "old_number": 1,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "fn main() {",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 2,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "    let greeting = \"hello, diff\";",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 3,
+      "new_number": 3,
+      "segments": [
+        {
+          "text": "    println!(\"{greeting}\");",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 4,
+      "new_number": 4,
+      "segments": []
+    },
+    {
+      "kind": "equal",
+      "old_number": 5,
+      "new_number": 5,
+      "segments": [
+        {
+          "text": "    // trailing comment",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 6,
+      "new_number": 6,
+      "segments": [
+        {
+          "text": "}",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 7,
+      "new_number": 7,
+      "segments": []
+    }
+  ],
+  "added": 0,
+  "removed": 0,
+  "line_count": 7
+}

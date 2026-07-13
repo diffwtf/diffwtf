@@ -1,0 +1,82 @@
+prefix line 1: the same on both sides
+prefix line 2: the same on both sides
+prefix line 3: the same on both sides
+prefix line 4: the same on both sides
+prefix line 5: the same on both sides
+prefix line 6: the same on both sides
+prefix line 7: the same on both sides
+prefix line 8: the same on both sides
+prefix line 9: the same on both sides
+prefix line 10: the same on both sides
+prefix line 11: the same on both sides
+prefix line 12: the same on both sides
+prefix line 13: the same on both sides
+prefix line 14: the same on both sides
+prefix line 15: the same on both sides
+prefix line 16: the same on both sides
+prefix line 17: the same on both sides
+prefix line 18: the same on both sides
+prefix line 19: the same on both sides
+prefix line 20: the same on both sides
+prefix line 21: the same on both sides
+prefix line 22: the same on both sides
+prefix line 23: the same on both sides
+prefix line 24: the same on both sides
+prefix line 25: the same on both sides
+prefix line 26: the same on both sides
+prefix line 27: the same on both sides
+prefix line 28: the same on both sides
+prefix line 29: the same on both sides
+prefix line 30: the same on both sides
+prefix line 31: the same on both sides
+prefix line 32: the same on both sides
+prefix line 33: the same on both sides
+prefix line 34: the same on both sides
+prefix line 35: the same on both sides
+prefix line 36: the same on both sides
+prefix line 37: the same on both sides
+prefix line 38: the same on both sides
+prefix line 39: the same on both sides
+prefix line 40: the same on both sides
+value = 100
+mode: legacy
+suffix line 1: identical tail content
+suffix line 2: identical tail content
+suffix line 3: identical tail content
+suffix line 4: identical tail content
+suffix line 5: identical tail content
+suffix line 6: identical tail content
+suffix line 7: identical tail content
+suffix line 8: identical tail content
+suffix line 9: identical tail content
+suffix line 10: identical tail content
+suffix line 11: identical tail content
+suffix line 12: identical tail content
+suffix line 13: identical tail content
+suffix line 14: identical tail content
+suffix line 15: identical tail content
+suffix line 16: identical tail content
+suffix line 17: identical tail content
+suffix line 18: identical tail content
+suffix line 19: identical tail content
+suffix line 20: identical tail content
+suffix line 21: identical tail content
+suffix line 22: identical tail content
+suffix line 23: identical tail content
+suffix line 24: identical tail content
+suffix line 25: identical tail content
+suffix line 26: identical tail content
+suffix line 27: identical tail content
+suffix line 28: identical tail content
+suffix line 29: identical tail content
+suffix line 30: identical tail content
+suffix line 31: identical tail content
+suffix line 32: identical tail content
+suffix line 33: identical tail content
+suffix line 34: identical tail content
+suffix line 35: identical tail content
+suffix line 36: identical tail content
+suffix line 37: identical tail content
+suffix line 38: identical tail content
+suffix line 39: identical tail content
+suffix line 40: identical tail content

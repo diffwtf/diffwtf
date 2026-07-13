@@ -1,0 +1,851 @@
+{
+  "rows": [
+    {
+      "kind": "equal",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "use wasm_bindgen::prelude::*;",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "use wasm_bindgen::prelude::*;",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 2,
+        "segments": []
+      },
+      "right": {
+        "number": 2,
+        "segments": []
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "#[wasm_bindgen]",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "#[wasm_bindgen]",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 4,
+        "segments": [
+          {
+            "text": "pub fn diff(old_text: &str, new_text: &str) -> ",
+            "highlighted": false
+          },
+          {
+            "text": "String",
+            "highlighted": true
+          },
+          {
+            "text": " {",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 4,
+        "segments": [
+          {
+            "text": "pub fn diff(old_text: &str, new_text: &str) -> ",
+            "highlighted": false
+          },
+          {
+            "text": "JsValue",
+            "highlighted": true
+          },
+          {
+            "text": " {",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 5,
+        "segments": [
+          {
+            "text": "    let ops = myers::diff_lines(old_text, new_text);",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 5,
+        "segments": [
+          {
+            "text": "    let ops = myers::diff_lines(old_text, new_text);",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 6,
+        "segments": [
+          {
+            "text": "    ",
+            "highlighted": false
+          },
+          {
+            "text": "serde_json::to_string",
+            "highlighted": true
+          },
+          {
+            "text": "(&ops)",
+            "highlighted": false
+          },
+          {
+            "text": ".unwrap()",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 6,
+        "segments": [
+          {
+            "text": "    ",
+            "highlighted": false
+          },
+          {
+            "text": "refine",
+            "highlighted": true
+          },
+          {
+            "text": "(&",
+            "highlighted": false
+          },
+          {
+            "text": "mut ",
+            "highlighted": true
+          },
+          {
+            "text": "ops)",
+            "highlighted": false
+          },
+          {
+            "text": ";",
+            "highlighted": true
+          }
+        ]
+      }
+    },
+    {
+      "kind": "insert",
+      "left": null,
+      "right": {
+        "number": 7,
+        "segments": [
+          {
+            "text": "    serde_wasm_bindgen::to_value(&ops).unwrap()",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 7,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 8,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 8,
+        "segments": []
+      },
+      "right": {
+        "number": 9,
+        "segments": []
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 9,
+        "segments": [
+          {
+            "text": "fn normalize(s: &str) -> String {",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 10,
+        "segments": [
+          {
+            "text": "fn normalize(s: &str) -> String {",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 10,
+        "segments": [
+          {
+            "text": "    s.trim().",
+            "highlighted": false
+          },
+          {
+            "text": "to_string",
+            "highlighted": true
+          },
+          {
+            "text": "()",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 11,
+        "segments": [
+          {
+            "text": "    s.trim().",
+            "highlighted": false
+          },
+          {
+            "text": "to_lowercase",
+            "highlighted": true
+          },
+          {
+            "text": "()",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 11,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 12,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 12,
+        "segments": []
+      },
+      "right": {
+        "number": 13,
+        "segments": []
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 13,
+        "segments": [
+          {
+            "text": "//",
+            "highlighted": true
+          },
+          {
+            "text": " ",
+            "highlighted": false
+          },
+          {
+            "text": "TODO",
+            "highlighted": true
+          },
+          {
+            "text": ": ",
+            "highlighted": false
+          },
+          {
+            "text": "add",
+            "highlighted": true
+          },
+          {
+            "text": " ",
+            "highlighted": false
+          },
+          {
+            "text": "word-level",
+            "highlighted": true
+          },
+          {
+            "text": " ",
+            "highlighted": false
+          },
+          {
+            "text": "refinement",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 14,
+        "segments": [
+          {
+            "text": "fn",
+            "highlighted": true
+          },
+          {
+            "text": " ",
+            "highlighted": false
+          },
+          {
+            "text": "refine(ops",
+            "highlighted": true
+          },
+          {
+            "text": ": ",
+            "highlighted": false
+          },
+          {
+            "text": "&mut",
+            "highlighted": true
+          },
+          {
+            "text": " ",
+            "highlighted": false
+          },
+          {
+            "text": "Vec<Op>)",
+            "highlighted": true
+          },
+          {
+            "text": " ",
+            "highlighted": false
+          },
+          {
+            "text": "{",
+            "highlighted": true
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 14,
+        "segments": [
+          {
+            "text": "fn refine",
+            "highlighted": true
+          },
+          {
+            "text": "(ops",
+            "highlighted": false
+          },
+          {
+            "text": ": Vec<Op>",
+            "highlighted": true
+          },
+          {
+            "text": ")",
+            "highlighted": false
+          },
+          {
+            "text": " -> Vec<Op> {",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 15,
+        "segments": [
+          {
+            "text": "    intraline::split_words",
+            "highlighted": true
+          },
+          {
+            "text": "(ops)",
+            "highlighted": false
+          },
+          {
+            "text": ";",
+            "highlighted": true
+          }
+        ]
+      }
+    },
+    {
+      "kind": "delete",
+      "left": {
+        "number": 15,
+        "segments": [
+          {
+            "text": "    ops",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": null
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 16,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 16,
+        "segments": [
+          {
+            "text": "}",
+            "highlighted": false
+          }
+        ]
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "equal",
+      "old_number": 1,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "use wasm_bindgen::prelude::*;",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 2,
+      "new_number": 2,
+      "segments": []
+    },
+    {
+      "kind": "equal",
+      "old_number": 3,
+      "new_number": 3,
+      "segments": [
+        {
+          "text": "#[wasm_bindgen]",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 4,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "pub fn diff(old_text: &str, new_text: &str) -> ",
+          "highlighted": false
+        },
+        {
+          "text": "String",
+          "highlighted": true
+        },
+        {
+          "text": " {",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 4,
+      "segments": [
+        {
+          "text": "pub fn diff(old_text: &str, new_text: &str) -> ",
+          "highlighted": false
+        },
+        {
+          "text": "JsValue",
+          "highlighted": true
+        },
+        {
+          "text": " {",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 5,
+      "new_number": 5,
+      "segments": [
+        {
+          "text": "    let ops = myers::diff_lines(old_text, new_text);",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 6,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "    ",
+          "highlighted": false
+        },
+        {
+          "text": "serde_json::to_string",
+          "highlighted": true
+        },
+        {
+          "text": "(&ops)",
+          "highlighted": false
+        },
+        {
+          "text": ".unwrap()",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 6,
+      "segments": [
+        {
+          "text": "    ",
+          "highlighted": false
+        },
+        {
+          "text": "refine",
+          "highlighted": true
+        },
+        {
+          "text": "(&",
+          "highlighted": false
+        },
+        {
+          "text": "mut ",
+          "highlighted": true
+        },
+        {
+          "text": "ops)",
+          "highlighted": false
+        },
+        {
+          "text": ";",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 7,
+      "segments": [
+        {
+          "text": "    serde_wasm_bindgen::to_value(&ops).unwrap()",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 7,
+      "new_number": 8,
+      "segments": [
+        {
+          "text": "}",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 8,
+      "new_number": 9,
+      "segments": []
+    },
+    {
+      "kind": "equal",
+      "old_number": 9,
+      "new_number": 10,
+      "segments": [
+        {
+          "text": "fn normalize(s: &str) -> String {",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 10,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "    s.trim().",
+          "highlighted": false
+        },
+        {
+          "text": "to_string",
+          "highlighted": true
+        },
+        {
+          "text": "()",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 11,
+      "segments": [
+        {
+          "text": "    s.trim().",
+          "highlighted": false
+        },
+        {
+          "text": "to_lowercase",
+          "highlighted": true
+        },
+        {
+          "text": "()",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 11,
+      "new_number": 12,
+      "segments": [
+        {
+          "text": "}",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 12,
+      "new_number": 13,
+      "segments": []
+    },
+    {
+      "kind": "delete",
+      "old_number": 13,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "//",
+          "highlighted": true
+        },
+        {
+          "text": " ",
+          "highlighted": false
+        },
+        {
+          "text": "TODO",
+          "highlighted": true
+        },
+        {
+          "text": ": ",
+          "highlighted": false
+        },
+        {
+          "text": "add",
+          "highlighted": true
+        },
+        {
+          "text": " ",
+          "highlighted": false
+        },
+        {
+          "text": "word-level",
+          "highlighted": true
+        },
+        {
+          "text": " ",
+          "highlighted": false
+        },
+        {
+          "text": "refinement",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 14,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "fn refine",
+          "highlighted": true
+        },
+        {
+          "text": "(ops",
+          "highlighted": false
+        },
+        {
+          "text": ": Vec<Op>",
+          "highlighted": true
+        },
+        {
+          "text": ")",
+          "highlighted": false
+        },
+        {
+          "text": " -> Vec<Op> {",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 15,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "    ops",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 14,
+      "segments": [
+        {
+          "text": "fn",
+          "highlighted": true
+        },
+        {
+          "text": " ",
+          "highlighted": false
+        },
+        {
+          "text": "refine(ops",
+          "highlighted": true
+        },
+        {
+          "text": ": ",
+          "highlighted": false
+        },
+        {
+          "text": "&mut",
+          "highlighted": true
+        },
+        {
+          "text": " ",
+          "highlighted": false
+        },
+        {
+          "text": "Vec<Op>)",
+          "highlighted": true
+        },
+        {
+          "text": " ",
+          "highlighted": false
+        },
+        {
+          "text": "{",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 15,
+      "segments": [
+        {
+          "text": "    intraline::split_words",
+          "highlighted": true
+        },
+        {
+          "text": "(ops)",
+          "highlighted": false
+        },
+        {
+          "text": ";",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 16,
+      "new_number": 16,
+      "segments": [
+        {
+          "text": "}",
+          "highlighted": false
+        }
+      ]
+    }
+  ],
+  "added": 6,
+  "removed": 6,
+  "line_count": 16
+}

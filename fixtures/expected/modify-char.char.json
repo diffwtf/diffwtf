@@ -1,0 +1,192 @@
+{
+  "rows": [
+    {
+      "kind": "modify",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "rec",
+            "highlighted": false
+          },
+          {
+            "text": "i",
+            "highlighted": true
+          },
+          {
+            "text": "eve the pa",
+            "highlighted": false
+          },
+          {
+            "text": "k",
+            "highlighted": true
+          },
+          {
+            "text": "cage",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "rece",
+            "highlighted": false
+          },
+          {
+            "text": "i",
+            "highlighted": true
+          },
+          {
+            "text": "ve the pac",
+            "highlighted": false
+          },
+          {
+            "text": "k",
+            "highlighted": true
+          },
+          {
+            "text": "age",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "version 1.4.",
+            "highlighted": false
+          },
+          {
+            "text": "02",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "version 1.4.",
+            "highlighted": false
+          },
+          {
+            "text": "13",
+            "highlighted": true
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 3,
+        "segments": []
+      },
+      "right": {
+        "number": 3,
+        "segments": []
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "delete",
+      "old_number": 1,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "rec",
+          "highlighted": false
+        },
+        {
+          "text": "i",
+          "highlighted": true
+        },
+        {
+          "text": "eve the pa",
+          "highlighted": false
+        },
+        {
+          "text": "k",
+          "highlighted": true
+        },
+        {
+          "text": "cage",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 2,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "version 1.4.",
+          "highlighted": false
+        },
+        {
+          "text": "02",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "rece",
+          "highlighted": false
+        },
+        {
+          "text": "i",
+          "highlighted": true
+        },
+        {
+          "text": "ve the pac",
+          "highlighted": false
+        },
+        {
+          "text": "k",
+          "highlighted": true
+        },
+        {
+          "text": "age",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "version 1.4.",
+          "highlighted": false
+        },
+        {
+          "text": "13",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 3,
+      "new_number": 3,
+      "segments": []
+    }
+  ],
+  "added": 2,
+  "removed": 2,
+  "line_count": 3
+}

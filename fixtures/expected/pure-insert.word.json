@@ -1,0 +1,202 @@
+{
+  "rows": [
+    {
+      "kind": "equal",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "one",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "one",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "two",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "two",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "insert",
+      "left": null,
+      "right": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "new line A",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "insert",
+      "left": null,
+      "right": {
+        "number": 4,
+        "segments": [
+          {
+            "text": "new line B",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "three",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 5,
+        "segments": [
+          {
+            "text": "three",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 4,
+        "segments": [
+          {
+            "text": "four",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 6,
+        "segments": [
+          {
+            "text": "four",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 5,
+        "segments": []
+      },
+      "right": {
+        "number": 7,
+        "segments": []
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "equal",
+      "old_number": 1,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "one",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 2,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "two",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 3,
+      "segments": [
+        {
+          "text": "new line A",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 4,
+      "segments": [
+        {
+          "text": "new line B",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 3,
+      "new_number": 5,
+      "segments": [
+        {
+          "text": "three",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 4,
+      "new_number": 6,
+      "segments": [
+        {
+          "text": "four",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 5,
+      "new_number": 7,
+      "segments": []
+    }
+  ],
+  "added": 2,
+  "removed": 0,
+  "line_count": 7
+}

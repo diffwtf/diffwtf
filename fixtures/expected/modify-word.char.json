@@ -1,0 +1,181 @@
+{
+  "rows": [
+    {
+      "kind": "modify",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "The quick ",
+            "highlighted": false
+          },
+          {
+            "text": "b",
+            "highlighted": true
+          },
+          {
+            "text": "r",
+            "highlighted": false
+          },
+          {
+            "text": "own",
+            "highlighted": true
+          },
+          {
+            "text": " fox ",
+            "highlighted": false
+          },
+          {
+            "text": "jum",
+            "highlighted": true
+          },
+          {
+            "text": "ps over the lazy dog.",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "The quick r",
+            "highlighted": false
+          },
+          {
+            "text": "ed",
+            "highlighted": true
+          },
+          {
+            "text": " fox ",
+            "highlighted": false
+          },
+          {
+            "text": "lea",
+            "highlighted": true
+          },
+          {
+            "text": "ps over the lazy dog.",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "Unchanged second line.",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "Unchanged second line.",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 3,
+        "segments": []
+      },
+      "right": {
+        "number": 3,
+        "segments": []
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "delete",
+      "old_number": 1,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "The quick ",
+          "highlighted": false
+        },
+        {
+          "text": "b",
+          "highlighted": true
+        },
+        {
+          "text": "r",
+          "highlighted": false
+        },
+        {
+          "text": "own",
+          "highlighted": true
+        },
+        {
+          "text": " fox ",
+          "highlighted": false
+        },
+        {
+          "text": "jum",
+          "highlighted": true
+        },
+        {
+          "text": "ps over the lazy dog.",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "The quick r",
+          "highlighted": false
+        },
+        {
+          "text": "ed",
+          "highlighted": true
+        },
+        {
+          "text": " fox ",
+          "highlighted": false
+        },
+        {
+          "text": "lea",
+          "highlighted": true
+        },
+        {
+          "text": "ps over the lazy dog.",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 2,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "Unchanged second line.",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 3,
+      "new_number": 3,
+      "segments": []
+    }
+  ],
+  "added": 1,
+  "removed": 1,
+  "line_count": 3
+}

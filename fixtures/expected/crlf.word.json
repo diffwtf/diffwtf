@@ -1,0 +1,195 @@
+{
+  "rows": [
+    {
+      "kind": "modify",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "first line",
+            "highlighted": false
+          },
+          {
+            "text": "\r",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "first line",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "second line",
+            "highlighted": false
+          },
+          {
+            "text": "\r",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "second ",
+            "highlighted": false
+          },
+          {
+            "text": "improved ",
+            "highlighted": true
+          },
+          {
+            "text": "line",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "modify",
+      "left": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "third line",
+            "highlighted": false
+          },
+          {
+            "text": "\r",
+            "highlighted": true
+          }
+        ]
+      },
+      "right": {
+        "number": 3,
+        "segments": [
+          {
+            "text": "third line",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 4,
+        "segments": []
+      },
+      "right": {
+        "number": 4,
+        "segments": []
+      }
+    }
+  ],
+  "unified": [
+    {
+      "kind": "delete",
+      "old_number": 1,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "first line",
+          "highlighted": false
+        },
+        {
+          "text": "\r",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 2,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "second line",
+          "highlighted": false
+        },
+        {
+          "text": "\r",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 3,
+      "new_number": null,
+      "segments": [
+        {
+          "text": "third line",
+          "highlighted": false
+        },
+        {
+          "text": "\r",
+          "highlighted": true
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "first line",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "second ",
+          "highlighted": false
+        },
+        {
+          "text": "improved ",
+          "highlighted": true
+        },
+        {
+          "text": "line",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "insert",
+      "old_number": null,
+      "new_number": 3,
+      "segments": [
+        {
+          "text": "third line",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 4,
+      "new_number": 4,
+      "segments": []
+    }
+  ],
+  "added": 3,
+  "removed": 3,
+  "line_count": 4
+}

@@ -1,0 +1,87 @@
+{
+  "rows": [
+    {
+      "kind": "equal",
+      "left": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "alpha",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 1,
+        "segments": [
+          {
+            "text": "alpha",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "equal",
+      "left": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "beta",
+            "highlighted": false
+          }
+        ]
+      },
+      "right": {
+        "number": 2,
+        "segments": [
+          {
+            "text": "beta",
+            "highlighted": false
+          }
+        ]
+      }
+    },
+    {
+      "kind": "delete",
+      "left": {
+        "number": 3,
+        "segments": []
+      },
+      "right": null
+    }
+  ],
+  "unified": [
+    {
+      "kind": "equal",
+      "old_number": 1,
+      "new_number": 1,
+      "segments": [
+        {
+          "text": "alpha",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "equal",
+      "old_number": 2,
+      "new_number": 2,
+      "segments": [
+        {
+          "text": "beta",
+          "highlighted": false
+        }
+      ]
+    },
+    {
+      "kind": "delete",
+      "old_number": 3,
+      "new_number": null,
+      "segments": []
+    }
+  ],
+  "added": 0,
+  "removed": 1,
+  "line_count": 3
+}
