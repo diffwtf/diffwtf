@@ -1,0 +1,16 @@
+[package]
+name = "diffwtf-core"
+version = "0.1.0"
+description = "Fast Myers diff engine with intra-line refinement — powers diff.wtf"
+keywords = ["diff", "myers", "text", "wasm"]
+categories = ["text-processing", "algorithms"]
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde"]

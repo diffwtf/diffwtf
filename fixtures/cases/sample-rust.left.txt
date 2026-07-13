@@ -1,0 +1,16 @@
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn diff(old_text: &str, new_text: &str) -> String {
+    let ops = myers::diff_lines(old_text, new_text);
+    serde_json::to_string(&ops).unwrap()
+}
+
+fn normalize(s: &str) -> String {
+    s.trim().to_string()
+}
+
+// TODO: add word-level refinement
+fn refine(ops: Vec<Op>) -> Vec<Op> {
+    ops
+}

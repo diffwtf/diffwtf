@@ -1,0 +1,16 @@
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn diff(old_text: &str, new_text: &str) -> JsValue {
+    let ops = myers::diff_lines(old_text, new_text);
+    refine(&mut ops);
+    serde_wasm_bindgen::to_value(&ops).unwrap()
+}
+
+fn normalize(s: &str) -> String {
+    s.trim().to_lowercase()
+}
+
+fn refine(ops: &mut Vec<Op>) {
+    intraline::split_words(ops);
+}
