@@ -33,11 +33,12 @@
 use crate::lcs::Op;
 
 /// Depth cap for the forward search, sized so the backtrack trace stays
-/// within a roughly 32 MB budget. The trace holds
+/// within a 32 MiB budget. The trace holds
 /// sum(2d + 1 for d in 0..D) = D^2 words, so the budget gives
 /// D^2 * 8 bytes <= 32 MiB, D <= sqrt(4 194 304) = 2048. At the cap the
-/// trace is 2048^2 = 4 194 304 words: about 34 MB at 8-byte words on 64-bit
-/// hosts and 17 MB on wasm32 (4-byte words), regardless of input size.
+/// trace is 2048^2 = 4 194 304 words: 32 MiB (roughly 34 MB) at 8-byte
+/// words on 64-bit hosts and 16 MiB (roughly 17 MB) on wasm32 (4-byte
+/// words), regardless of input size.
 /// Diffs needing at most 2048 line edits after prefix/suffix trimming (any
 /// realistic paste) are unaffected and stay minimal; past the cap the
 /// trimmed middle degrades to del-all then ins-all (see `middle_capped`).

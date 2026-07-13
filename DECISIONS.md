@@ -7,7 +7,8 @@ path; uncapped, two unrelated 5 000-line inputs reach D near 10 000, about
 10^8 words (roughly 400 MB in wasm32 linear memory), a tab crash. The forward
 search now stops after MAX_D = 2048 rounds, chosen from the budget
 D^2 * 8 bytes <= 32 MiB, so D <= sqrt(4 194 304) = 2048: the trace tops out
-at about 34 MB at 8-byte words on 64-bit hosts and 17 MB on wasm32.
+at 32 MiB (roughly 34 MB) at 8-byte words on 64-bit hosts and 16 MiB
+(roughly 17 MB) on wasm32.
 Semantics in the engine: prefix/suffix trimming applies first; any input
 whose minimal line diff needs at most 2048 edits after trimming is unaffected
 and stays minimal; past the cap the trimmed middle degrades to del-all then
