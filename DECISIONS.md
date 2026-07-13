@@ -1,5 +1,18 @@
 # DECISIONS
 
+## D4: PRO teaser buttons removed pre-launch (M6 follow-up)
+The design handoff includes two non-functional teaser buttons in the results
+toolbar, Export PDF (PRO) and AI summary (PRO). Both are removed for launch by
+Alex's decision (2026-07). Reasons: non-functional buttons read as broken
+rather than as roadmap, and AI summary as commonly implemented (server-side
+inference) would contradict the product's core promise that nothing leaves the
+browser. PRO affordances may return post-launch as deliberate features; any AI
+feature must be consistent with the no-upload guarantee or clearly disclosed.
+This entry supersedes the design handoff for these elements: future fidelity
+checks against the design must treat the absence of these buttons (and of any
+replacement in their place) as correct. The rest of the results toolbar keeps
+the design layout exactly.
+
 ## D3: line-level search depth cap, MAX_D = 2048 (M4 review, 2026-07)
 Supersedes D2's "documented, not capped" stance. Plain O(ND) Myers keeps a
 per-round trace of sum(2d + 1 for d in 0..D) = D^2 words to recover the edit
