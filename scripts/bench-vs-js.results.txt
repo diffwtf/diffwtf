@@ -1,26 +1,129 @@
-# diff.wtf benchmark: JS reference vs shipped wasm engine
-# node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 55c3810
-# median of 50 runs after 10 warmup runs, word granularity, interleaved
+# diff.wtf benchmark: JS reference vs shipped wasm pipeline (sparse v2 boundary)
+# node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit c00db09
+# medians, 10 warmup runs per pipeline, word granularity, interleaved
+# phases and methodology: header comment of scripts/bench-vs-js.mjs
 
-sample-rust: the "Load example" pair every visitor sees
-  input: 343 + 360 chars, +6/-6 lines
-  js reference    0.041 ms
-  wasm end-to-end 0.103 ms
-  ratio (js/wasm) 0.40x
+tiny-snippet: the "Load example" pair every visitor sees (343 + 360 chars)
+  input: 343 + 360 chars, +6/-6 lines, median of 50
+  js total (compute incl. views)   0.046 ms
+  wasm engine (probe)              0.024 ms
+  wasm compute call                0.044 ms
+  wasm result marshal (derived)    0.020 ms
+  wasm view assembly (js)          0.011 ms
+  wasm total (call + assembly)     0.058 ms
+  ratio (js total / wasm total)    0.79x
 
-large-perf: 5,000-line / 150 KB file, 44 edited lines (the marketing chart case)
-  input: 152,579 + 152,846 chars, +44/-42 lines
-  js reference    5.79 ms
-  wasm end-to-end 10.11 ms
-  ratio (js/wasm) 0.57x
+small-10kb: 330 lines / ~10 KB, 12 edited lines in one zone
+  input: 10,350 + 10,389 chars, +11/-11 lines, median of 50
+  js total (compute incl. views)   0.212 ms
+  wasm engine (probe)              0.077 ms
+  wasm compute call                0.099 ms
+  wasm result marshal (derived)    0.022 ms
+  wasm view assembly (js)          0.023 ms
+  wasm total (call + assembly)     0.131 ms
+  ratio (js total / wasm total)    1.62x
 
-large-identical: the same 5,000-line file on both sides: isolates result-transfer cost
-  input: 152,579 + 152,579 chars, +0/-0 lines
-  js reference    0.700 ms
-  wasm end-to-end 9.84 ms
-  ratio (js/wasm) 0.07x
+mid-40kb: 1,300 lines / ~40 KB, 22 edited lines in one zone
+  input: 40,982 + 41,070 chars, +21/-21 lines, median of 50
+  js total (compute incl. views)   3.27 ms
+  wasm engine (probe)              0.285 ms
+  wasm compute call                0.309 ms
+  wasm result marshal (derived)    0.025 ms
+  wasm view assembly (js)          0.095 ms
+  wasm total (call + assembly)     0.407 ms
+  ratio (js total / wasm total)    8.03x
 
-# summary (medians)
-# sample-rust: js 0.041 ms vs wasm 0.103 ms -> 0.40x
-# large-perf: js 5.79 ms vs wasm 10.11 ms -> 0.57x
-# large-identical: js 0.700 ms vs wasm 9.84 ms -> 0.07x
+large-150kb-sparse: 5,000 lines / 150 KB, 44 edited lines (the committed marketing fixture)
+  input: 152,579 + 152,846 chars, +44/-42 lines, median of 50
+  js total (compute incl. views)   6.03 ms
+  wasm engine (probe)              1.00 ms
+  wasm compute call                1.04 ms
+  wasm result marshal (derived)    0.033 ms
+  wasm view assembly (js)          0.347 ms
+  wasm total (call + assembly)     1.41 ms
+  ratio (js total / wasm total)    4.28x
+
+large-150kb-identical: 150 KB, byte-identical sides: measures the identical-input fast path plus boundary floor, NOT engine speed
+  input: 152,579 + 152,579 chars, +0/-0 lines, median of 50
+  js total (compute incl. views)   0.708 ms
+  wasm engine (probe)              0.723 ms
+  wasm compute call                0.736 ms
+  wasm result marshal (derived)    0.014 ms
+  wasm view assembly (js)          0.321 ms
+  wasm total (call + assembly)     1.07 ms
+  ratio (js total / wasm total)    0.66x
+
+lines-10k: 10,000 lines / ~310 KB, 60 edited lines in one zone
+  input: 315,272 + 315,633 chars, +62/-60 lines, median of 50
+  js total (compute incl. views)   5.58 ms
+  wasm engine (probe)              2.01 ms
+  wasm compute call                2.03 ms
+  wasm result marshal (derived)    0.022 ms
+  wasm view assembly (js)          0.678 ms
+  wasm total (call + assembly)     2.72 ms
+  ratio (js total / wasm total)    2.05x
+
+large-1mb-sparse: 33,000 lines / ~1 MB, 72 edited lines in one zone
+  input: 1,038,890 + 1,039,396 chars, +74/-71 lines, median of 25
+  js total (compute incl. views)   10.39 ms
+  wasm engine (probe)              6.36 ms
+  wasm compute call                6.43 ms
+  wasm result marshal (derived)    0.077 ms
+  wasm view assembly (js)          2.85 ms
+  wasm total (call + assembly)     9.29 ms
+  ratio (js total / wasm total)    1.12x
+
+large-1mb-spread: 33,000 lines / ~1 MB, ~110 edits spread across the whole file: past the reference LCS bailout, so the reference degrades to a full rewrite while the engine stays minimal; output quality differs and added/removed counts are reported per side
+  input: 1,040,315 + 1,040,931 chars, js +32701/-32701 vs wasm +110/-110 (documented divergence: reference degrades past its bailout), median of 25
+  js total (compute incl. views)   68.56 ms
+  wasm engine (probe)              6.65 ms
+  wasm compute call                6.77 ms
+  wasm result marshal (derived)    0.118 ms
+  wasm view assembly (js)          2.92 ms
+  wasm total (call + assembly)     9.70 ms
+  ratio (js total / wasm total)    7.07x
+
+complete-rewrite: 3,000 vs 3,000 lines with nothing in common: both engines take their documented degradation path (reference LCS bailout, engine depth cap) and emit the same del-all/ins-all diff
+  input: 94,757 + 94,365 chars, +3000/-3000 lines, median of 25
+  js total (compute incl. views)   6.26 ms
+  wasm engine (probe)              17.54 ms
+  wasm compute call                17.73 ms
+  wasm result marshal (derived)    0.194 ms
+  wasm view assembly (js)          1.23 ms
+  wasm total (call + assembly)     19.10 ms
+  ratio (js total / wasm total)    0.33x
+
+adversarial-repeats: 700 lines per side drawn from a 12-line pool, independently shuffled: maximal ambiguity; both engines produce minimal diffs that may differ in shape but must agree on counts
+  input: 21,607 + 21,553 chars, +398/-398 lines, median of 50
+  js total (compute incl. views)   6.17 ms
+  wasm engine (probe)              2.90 ms
+  wasm compute call                2.94 ms
+  wasm result marshal (derived)    0.034 ms
+  wasm view assembly (js)          0.116 ms
+  wasm total (call + assembly)     3.06 ms
+  ratio (js total / wasm total)    2.01x
+
+minified-json: single-line minified JSON, ~150 KB per side, one value edited mid-string: exercises intra-line refinement with prefix/suffix trimming on one huge line
+  input: 145,124 + 145,145 chars, +1/-1 lines, median of 50
+  js total (compute incl. views)   8.62 ms
+  wasm engine (probe)              3.48 ms
+  wasm compute call                3.59 ms
+  wasm result marshal (derived)    0.108 ms
+  wasm view assembly (js)          0.009 ms
+  wasm total (call + assembly)     3.60 ms
+  ratio (js total / wasm total)    2.40x
+
+# summary (medians, ratio = js total / wasm total; >1 means wasm wins)
+# tiny-snippet: js 0.046 ms vs wasm 0.058 ms -> 0.79x
+# small-10kb: js 0.212 ms vs wasm 0.131 ms -> 1.62x
+# mid-40kb: js 3.27 ms vs wasm 0.407 ms -> 8.03x
+# large-150kb-sparse: js 6.03 ms vs wasm 1.41 ms -> 4.28x
+# large-150kb-identical: js 0.708 ms vs wasm 1.07 ms -> 0.66x  [identical fast path, not an engine-speed number]
+# lines-10k: js 5.58 ms vs wasm 2.72 ms -> 2.05x
+# large-1mb-sparse: js 10.39 ms vs wasm 9.29 ms -> 1.12x
+# large-1mb-spread: js 68.56 ms vs wasm 9.70 ms -> 7.07x
+# complete-rewrite: js 6.26 ms vs wasm 19.10 ms -> 0.33x
+# adversarial-repeats: js 6.17 ms vs wasm 3.06 ms -> 2.01x
+# minified-json: js 8.62 ms vs wasm 3.60 ms -> 2.40x
+# crossover (sparse-edit size-scaling cases only; ratios are content-dependent, see complete-rewrite): wasm overtakes between tiny-snippet (360 chars, 0.79x) and small-10kb (10,389 chars, 1.62x)
+# (sink 10255, printed so no timed call can be optimized away)

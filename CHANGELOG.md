@@ -18,6 +18,12 @@ First real release (replaces the 0.0.1 crates.io name reservation).
   counts.
 - `diff_lines(left, right) -> Vec<LineOp>`: the raw line-level ops without
   intra-line refinement or view assembly.
+- `diff_sparse(left, right, granularity) -> SparseDiff`: the same diff as
+  run-length ops plus intra-line highlight ranges (UTF-16 code units) for
+  changed lines only, sized by the number of edits rather than by document
+  size. Built for cheap transfer across a wasm boundary: reassembling rows
+  from it plus the two original inputs reproduces `diff` exactly, and
+  byte-identical inputs short-circuit to a single Equal run.
 - `serde` feature: `Serialize` derives on all output types (off by default).
 - Conformance test suite against the diff.wtf JS reference implementation,
   plus property tests (reconstructability, minimality, determinism).

@@ -16,8 +16,8 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::PathBuf;
 
-use common::check_invariants;
-use diffwtf_core::{diff, DiffResult, Granularity};
+use common::{assemble, check_invariants, check_sparse_invariants};
+use diffwtf_core::{diff, diff_sparse, DiffResult, Granularity, SparseDiff};
 use serde_json::Value;
 
 /// Cases demoted from the exact tier because Myers produces a
@@ -134,7 +134,11 @@ fn fixture_files_pair_up_exactly() {
         .collect();
     let wanted: BTreeSet<String> = names
         .iter()
-        .flat_map(|n| [format!("{n}.word.json"), format!("{n}.char.json")])
+        .flat_map(|n| {
+            ["word", "char"]
+                .into_iter()
+                .flat_map(move |g| [format!("{n}.{g}.json"), format!("{n}.{g}.ops.json")])
+        })
         .collect();
     assert_eq!(
         expected, wanted,
@@ -150,35 +154,49 @@ fn every_case_matches_the_reference_exactly() {
         let mut diverged = false;
         let (left, right) = read_case(&name);
         for (granularity, gran_name) in GRANULARITIES {
-            let path = fixtures_dir()
-                .join("expected")
-                .join(format!("{name}.{gran_name}.json"));
-            let expected: Value = serde_json::from_str(
-                &fs::read_to_string(&path)
-                    .unwrap_or_else(|e| panic!("reading {}: {e}", path.display())),
-            )
-            .unwrap_or_else(|e| panic!("parsing {}: {e}", path.display()));
-            let actual = serde_json::to_value(diff(&left, &right, granularity))
-                .expect("DiffResult serializes");
-            if actual == expected {
-                continue;
-            }
-            diverged = true;
-            if demoted {
-                // Equally minimal diffs still agree on the counts.
-                for key in ["added", "removed", "line_count"] {
-                    if actual.get(key) != expected.get(key) {
-                        failures.push(format!(
-                            "{name} ({gran_name}): demoted case, but {key} {:?} != reference {:?}",
-                            actual.get(key),
-                            expected.get(key)
-                        ));
-                    }
+            // Both fixture tiers: the materialized DiffResult and the sparse
+            // v2 boundary shape, each against its committed reference output.
+            let tiers = [
+                (
+                    "json",
+                    serde_json::to_value(diff(&left, &right, granularity))
+                        .expect("DiffResult serializes"),
+                ),
+                (
+                    "ops.json",
+                    serde_json::to_value(diff_sparse(&left, &right, granularity))
+                        .expect("SparseDiff serializes"),
+                ),
+            ];
+            for (tier, actual) in tiers {
+                let path = fixtures_dir()
+                    .join("expected")
+                    .join(format!("{name}.{gran_name}.{tier}"));
+                let expected: Value = serde_json::from_str(
+                    &fs::read_to_string(&path)
+                        .unwrap_or_else(|e| panic!("reading {}: {e}", path.display())),
+                )
+                .unwrap_or_else(|e| panic!("parsing {}: {e}", path.display()));
+                if actual == expected {
+                    continue;
                 }
-            } else {
-                let at = first_divergence("$", &actual, &expected)
-                    .unwrap_or_else(|| "unlocated".to_string());
-                failures.push(format!("{name} ({gran_name}): {at}"));
+                diverged = true;
+                if demoted {
+                    // Equally minimal diffs still agree on the counts.
+                    for key in ["added", "removed", "line_count"] {
+                        if actual.get(key) != expected.get(key) {
+                            failures.push(format!(
+                                "{name} ({gran_name}, {tier}): demoted case, but {key} {:?} != reference {:?}",
+                                actual.get(key),
+                                expected.get(key)
+                            ));
+                        }
+                    }
+                } else {
+                    let at = first_divergence("$", &actual, &expected)
+                        .unwrap_or_else(|| "unlocated".to_string());
+                    failures.push(format!("{name} ({gran_name}, {tier}): {at}"));
+                }
             }
         }
         if demoted && !diverged {
@@ -197,7 +215,8 @@ fn every_case_matches_the_reference_exactly() {
 
 /// The contract invariants that must hold for ANY input, exact case or not:
 /// row shape per kind, 1-based consecutive numbering, byte-exact input
-/// reconstruction, honest counts, hunk ordering, and merged segments.
+/// reconstruction, honest counts, hunk ordering, and merged segments; plus
+/// the sparse-shape invariants for `diff_sparse` (tests/common/mod.rs).
 #[test]
 fn every_case_satisfies_the_contract_invariants() {
     for name in case_names() {
@@ -205,12 +224,35 @@ fn every_case_satisfies_the_contract_invariants() {
         for (granularity, gran_name) in GRANULARITIES {
             let label = format!("{name} ({gran_name})");
             let result = diff(&left, &right, granularity);
+            let sparse = diff_sparse(&left, &right, granularity);
 
             if left.trim().is_empty() && right.trim().is_empty() {
                 assert_eq!(result, DiffResult::default(), "{label}: empty-state result");
+                assert_eq!(sparse, SparseDiff::default(), "{label}: empty-state sparse");
                 continue;
             }
             check_invariants(&label, &left, &right, &result);
+            check_sparse_invariants(&label, &left, &right, &sparse);
+        }
+    }
+}
+
+/// The sparse shape is lossless: reassembling rows from the ops, the
+/// highlights, and the two original inputs reproduces `diff()` exactly.
+/// This is the equivalence the web renderer relies on when it derives the
+/// Split and Unified views in JS instead of receiving them across the
+/// boundary.
+#[test]
+fn every_case_reassembles_diff_from_diff_sparse() {
+    for name in case_names() {
+        let (left, right) = read_case(&name);
+        for (granularity, gran_name) in GRANULARITIES {
+            let sparse = diff_sparse(&left, &right, granularity);
+            assert_eq!(
+                assemble(&left, &right, &sparse),
+                diff(&left, &right, granularity),
+                "{name} ({gran_name}): reassembled views differ from diff()"
+            );
         }
     }
 }

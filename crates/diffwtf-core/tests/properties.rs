@@ -15,8 +15,10 @@
 
 mod common;
 
-use common::check_invariants;
-use diffwtf_core::{diff, diff_lines, DiffResult, Granularity, LineOpKind, RowKind};
+use common::{assemble, check_invariants, check_sparse_invariants};
+use diffwtf_core::{
+    diff, diff_lines, diff_sparse, DiffResult, Granularity, LineOpKind, RowKind, SparseDiff,
+};
 
 /// xorshift64: deterministic, seedable, good enough for test-input shuffling.
 struct Rng(u64);
@@ -171,11 +173,20 @@ fn check_case(case: usize, left_lines: &[&str], right_lines: &[&str]) {
             "{label}: nondeterministic"
         );
 
+        let sparse = diff_sparse(&left, &right, granularity);
+
         if left.trim().is_empty() && right.trim().is_empty() {
             assert_eq!(result, DiffResult::default(), "{label}: empty state");
+            assert_eq!(sparse, SparseDiff::default(), "{label}: empty sparse state");
             continue;
         }
         check_invariants(&label, &left, &right, &result);
+        check_sparse_invariants(&label, &left, &right, &sparse);
+        assert_eq!(
+            assemble(&left, &right, &sparse),
+            result,
+            "{label}: sparse reassembly differs from diff()"
+        );
 
         // Note: joining zero lines and joining one empty line both make "",
         // so split('\n') is the honest recount of what diff() saw.

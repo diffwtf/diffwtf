@@ -33,11 +33,16 @@
 // Output is pretty-printed for reviewable diffs, except results over 1000
 // rows (the large perf-smoke case), which are written compact to keep the
 // repo small.
+//
+// Since M9 each case also gets {name}.{word,char}.ops.json: the sparse v2
+// wasm-boundary shape (run-length ops plus highlight ranges), derived from
+// the same normalized reference result by refdiff's sparseFromResult, so the
+// two fixture tiers cannot disagree with each other.
 
 import { mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compute } from '../reference/refdiff.mjs';
+import { compute, sparseFromResult } from '../reference/refdiff.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const casesDir = join(root, 'fixtures', 'cases');
@@ -99,6 +104,33 @@ function selfCheck(result, left, right, label) {
   }
 }
 
+// Sanity for the sparse tier: op runs must tile both inputs exactly, and the
+// highlight side channel must hold one entry per Modify row (a delete run
+// directly followed by an insert run pairs min(old, new) rows).
+function sparseSelfCheck(sparse, left, right, label) {
+  if (sparse.ops.length === 0) {
+    if (sparse.line_count !== 0) throw new Error(`${label}: empty ops but nonzero line_count`);
+    return;
+  }
+  let oldPos = 0, newPos = 0, modifies = 0;
+  for (const [i, op] of sparse.ops.entries()) {
+    if (op.old_start !== oldPos || op.new_start !== newPos) {
+      throw new Error(`${label}: op ${i} starts (${op.old_start},${op.new_start}) != cursors (${oldPos},${newPos})`);
+    }
+    oldPos += op.old_lines;
+    newPos += op.new_lines;
+    const next = sparse.ops[i + 1];
+    if (op.kind === 'delete' && next?.kind === 'insert') {
+      modifies += Math.min(op.old_lines, next.new_lines);
+    }
+  }
+  if (oldPos !== left.split('\n').length) throw new Error(`${label}: ops do not tile the left input`);
+  if (newPos !== right.split('\n').length) throw new Error(`${label}: ops do not tile the right input`);
+  if (modifies !== sparse.highlights.length) {
+    throw new Error(`${label}: ${sparse.highlights.length} highlight entries for ${modifies} modify rows`);
+  }
+}
+
 const names = readdirSync(casesDir)
   .filter(f => f.endsWith('.left.txt'))
   .map(f => f.slice(0, -'.left.txt'.length))
@@ -106,7 +138,10 @@ const names = readdirSync(casesDir)
 if (names.length === 0) throw new Error(`no cases found in ${casesDir}`);
 
 mkdirSync(expectedDir, { recursive: true });
-const wanted = new Set(names.flatMap(n => [`${n}.word.json`, `${n}.char.json`]));
+const wanted = new Set(
+  names.flatMap(n =>
+    ['word', 'char'].flatMap(g => [`${n}.${g}.json`, `${n}.${g}.ops.json`])),
+);
 for (const stale of readdirSync(expectedDir).filter(f => f.endsWith('.json') && !wanted.has(f))) {
   unlinkSync(join(expectedDir, stale));
   console.log(`✗ removed stale ${stale}`);
@@ -122,6 +157,12 @@ for (const name of names) {
     selfCheck(result, left, right, label);
     const json = result.rows.length > 1000 ? JSON.stringify(result) : JSON.stringify(result, null, 2);
     writeFileSync(join(expectedDir, `${label}.json`), json + '\n');
+
+    const sparse = sparseFromResult(result);
+    sparseSelfCheck(sparse, left, right, label);
+    const sparseJson =
+      sparse.ops.length > 1000 ? JSON.stringify(sparse) : JSON.stringify(sparse, null, 2);
+    writeFileSync(join(expectedDir, `${label}.ops.json`), sparseJson + '\n');
   }
   console.log(`✓ ${name}`);
 }

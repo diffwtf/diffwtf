@@ -1,5 +1,44 @@
 # DECISIONS
 
+## D6: Sparse wasm boundary contract v2 (M9, pending Alex ratification)
+Root cause (issue #9): the v1 boundary marshalled the full DiffResult, both
+views including every Equal row, through serde-wasm-bindgen one JS object at
+a time, so transfer cost scaled with document size and the end-to-end wasm
+path lost to the in-page JS reference on every measured input. M9 replaces
+what crosses the boundary, not the serializer: compute() now returns
+run-length ops (one Equal run per unchanged span) as parallel typed arrays
+plus a highlight side channel carrying intra-line ranges for Modify rows
+only, and web/js/assemble.js derives the Split and Unified views from the
+ops plus the two original input strings. Full shape: docs/scaffold-spec.md,
+"Wasm boundary contract v2".
+Decisions inside the contract, each an interpretation call ratified with the
+M9 review: (a) run kinds stay Equal/Delete/Insert, mirroring diff_lines and
+the unified-view convention, rather than a paired Change encoding; (b) span
+offsets are UTF-16 code units, the unit JS slices by, chosen over byte
+offsets so the assembler never rescans changed lines (Rust consumers who
+want text use diff(), whose Segments carry it); (c) starts are 0-based line
+indices, the slicing currency, with display numbers derived as index + 1;
+(d) the boundary object is a plain JS object, not a wasm-bindgen class, so
+no .free() obligation leaks into page code; (e) Rust diff() and diff_lines()
+are unchanged, the crate gains diff_sparse(), and only the wasm wrapper and
+web shell switch to it; (f) identical inputs (byte equality) short-circuit
+to a single Equal run, a disclosed product optimization that never backs an
+engine-speed claim; (g) the perf badge times compute plus JS view assembly,
+since renderable rows only exist after both.
+Consequences: transfer scales with edits. On the 150 KB sparse fixture the
+post-M9 marshal cost is measured at under 0.1 ms (the benchmark's derived
+marshal phase); the pre-M9 cost was never isolated by the M8 benchmark and
+is inferred at roughly 8 ms (the old 10.1 ms end-to-end minus engine time
+as measured post-M9, corroborated by the old identical-input case's ~9 ms
+transfer floor). The wasm binary lost
+the serde machinery (49.5 KB to 45.7 KB), and the conformance surface grew a
+second fixture tier (ops.json) plus a JS-side runner
+(scripts/conformance-web.mjs) that pins the shipped wasm and assembler to
+the reference. Known staleness, deliberate: the "Why it's fast" chart in
+web/index.html still shows the M8 numbers; site copy is Alex's call at the
+review gate and reconciling the chart from the committed M9 results is
+issue #11.
+
 ## D5: Responsive behavior (M6 follow-up)
 The design handoff is desktop only; this entry defines mobile (Alex-authorized
 scope, 2026-07). Desktop stays pixel-faithful: rendering at 1024px and up is

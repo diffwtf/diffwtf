@@ -15,14 +15,52 @@
 <h1>diffwtf wasm smoke test (dev tool)</h1>
 <p>
   Loads the wasm module, runs the bundled sample pair at word granularity,
-  asserts the output deep-equals
-  <code>fixtures/expected/sample-rust.word.json</code>, and dumps the
-  DiffResult JSON plus the measured time below.
+  asserts the sparse boundary result deep-equals
+  <code>fixtures/expected/sample-rust.word.ops.json</code> and that the
+  assembled views deep-equal <code>fixtures/expected/sample-rust.word.json</code>,
+  then dumps the sparse JSON plus the measured time below.
 </p>
 <pre id="status">loading engine...</pre>
 <pre id="out"></pre>
 <script type="module">
   import init, { compute } from './pkg/diffwtf_wasm.js';
+  import { assembleDiffResult } from './js/assemble.js';
+
+  // The boundary is parallel typed arrays; refold into the array-of-structs
+  // shape the ops fixture uses so the two can be deep-equal compared.
+  function foldSparse(sparse) {
+    const kinds = ['equal', 'delete', 'insert'];
+    const ops = Array.from(sparse.kind, (k, i) => ({
+      kind: kinds[k],
+      old_start: sparse.old_start[i],
+      new_start: sparse.new_start[i],
+      old_lines: sparse.old_lines[i],
+      new_lines: sparse.new_lines[i],
+    }));
+    const highlights = [];
+    let off = 0;
+    const takeSpans = (count) => {
+      const spans = [];
+      for (let s = 0; s < count; s++) {
+        spans.push({ start: sparse.hl_ranges[off], end: sparse.hl_ranges[off + 1] });
+        off += 2;
+      }
+      return spans;
+    };
+    for (let row = 0; 2 * row < sparse.hl_counts.length; row++) {
+      highlights.push({
+        left: takeSpans(sparse.hl_counts[2 * row]),
+        right: takeSpans(sparse.hl_counts[2 * row + 1]),
+      });
+    }
+    return {
+      ops,
+      highlights,
+      added: sparse.added,
+      removed: sparse.removed,
+      line_count: sparse.line_count,
+    };
+  }
 
   const statusEl = document.getElementById('status');
   const outEl = document.getElementById('out');
@@ -58,25 +96,33 @@
 
   try {
     await init();
-    const [left, right, expected] = await Promise.all([
+    const [left, right, expectedOps, expectedResult] = await Promise.all([
       fetchOk('../fixtures/cases/sample-rust.left.txt').then((r) => r.text()),
       fetchOk('../fixtures/cases/sample-rust.right.txt').then((r) => r.text()),
+      fetchOk('../fixtures/expected/sample-rust.word.ops.json').then((r) => r.json()),
       fetchOk('../fixtures/expected/sample-rust.word.json').then((r) => r.json()),
     ]);
 
     const t0 = performance.now();
-    const result = compute(left, right, 'word');
+    const sparse = compute(left, right, 'word');
+    const assembled = assembleDiffResult(left, right, sparse);
     const ms = performance.now() - t0;
 
-    const mismatch = firstMismatch(result, expected, '$');
+    const folded = foldSparse(sparse);
+    // JSON round trip so typed-array numbers and JSON numbers compare equal.
+    const opsMismatch = firstMismatch(JSON.parse(JSON.stringify(folded)), expectedOps, '$');
+    const viewMismatch = firstMismatch(JSON.parse(JSON.stringify(assembled)), expectedResult, '$');
     statusEl.textContent = [
-      `engine loaded; compute(sample-rust, word) took ${ms.toFixed(3)} ms`,
-      '(performance.now() around the wasm call, serialization included)',
-      mismatch
-        ? `FIDELITY CHECK FAILED at ${mismatch}`
-        : 'fidelity check PASSED: output deep-equals sample-rust.word.json',
+      `engine loaded; compute + assemble (sample-rust, word) took ${ms.toFixed(3)} ms`,
+      '(performance.now() around the wasm call plus view assembly)',
+      opsMismatch
+        ? `SPARSE FIDELITY CHECK FAILED at ${opsMismatch}`
+        : 'sparse fidelity check PASSED: boundary result deep-equals sample-rust.word.ops.json',
+      viewMismatch
+        ? `VIEW FIDELITY CHECK FAILED at ${viewMismatch}`
+        : 'view fidelity check PASSED: assembled views deep-equal sample-rust.word.json',
     ].join('\n');
-    outEl.textContent = JSON.stringify(result, null, 2);
+    outEl.textContent = JSON.stringify(folded, null, 2);
   } catch (err) {
     statusEl.textContent = `SMOKE TEST ERROR: ${err}`;
   }

@@ -1,0 +1,51 @@
+# diff.wtf browser benchmark: headless Chromium, real page (web/index.html), sparse v2 boundary
+# node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit c00db09
+# medians; phases and methodology: header comment of scripts/bench-browser.mjs
+
+tiny-snippet: the "Load example" pair every visitor sees (343 + 360 chars)
+  input: 343 + 360 chars, +6/-6 lines, median of 30 (render: 30)
+  js total (compute incl. views)   0.100 ms
+  wasm total (call + assembly)     0.100 ms
+  DOM render (split view, shared)  1.20 ms
+  ratio without render             1.00x
+  ratio including render           1.00x
+
+large-150kb-sparse: 5,000 lines / 150 KB, 44 edited lines (the committed marketing fixture)
+  input: 152,579 + 152,846 chars, +44/-42 lines, median of 30 (render: 10)
+  js total (compute incl. views)   6.80 ms
+  wasm total (call + assembly)     1.60 ms
+  DOM render (split view, shared)  239.00 ms
+  ratio without render             4.25x
+  ratio including render           1.02x
+
+large-150kb-identical: 150 KB, byte-identical sides: measures the identical-input fast path plus boundary floor, NOT engine speed
+  input: 152,579 + 152,579 chars, +0/-0 lines, median of 30 (render: 10)
+  js total (compute incl. views)   0.600 ms
+  wasm total (call + assembly)     1.10 ms
+  DOM render (split view, shared)  205.30 ms
+  ratio without render             0.55x
+  ratio including render           1.00x
+
+lines-10k: 10,000 lines / ~310 KB, 60 edited lines in one zone
+  input: 315,272 + 315,633 chars, +62/-60 lines, median of 20 (render: 5)
+  js total (compute incl. views)   5.95 ms
+  wasm total (call + assembly)     2.40 ms
+  DOM render (split view, shared)  429.80 ms
+  ratio without render             2.48x
+  ratio including render           1.01x
+
+large-1mb-sparse: 33,000 lines / ~1 MB, 72 edited lines in one zone
+  input: 1,038,890 + 1,039,396 chars, +74/-71 lines, median of 10 (render: 2)
+  js total (compute incl. views)   8.90 ms
+  wasm total (call + assembly)     7.00 ms
+  DOM render (split view, shared)  1754.20 ms
+  ratio without render             1.27x
+  ratio including render           1.00x
+
+# summary
+# tiny-snippet: js 0.100 ms vs wasm 0.100 ms -> 1.00x; incl. render 1.20 ms: 1.00x
+# large-150kb-sparse: js 6.80 ms vs wasm 1.60 ms -> 4.25x; incl. render 239.00 ms: 1.02x
+# large-150kb-identical: js 0.600 ms vs wasm 1.10 ms -> 0.55x; incl. render 205.30 ms: 1.00x  [identical fast path, not an engine-speed number]
+# lines-10k: js 5.95 ms vs wasm 2.40 ms -> 2.48x; incl. render 429.80 ms: 1.01x
+# large-1mb-sparse: js 8.90 ms vs wasm 7.00 ms -> 1.27x; incl. render 1754.20 ms: 1.00x
+# (sink 16137, printed so no timed call can be optimized away)

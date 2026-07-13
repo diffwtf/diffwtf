@@ -1,0 +1,56 @@
+{
+  "ops": [
+    {
+      "kind": "delete",
+      "old_start": 0,
+      "new_start": 0,
+      "old_lines": 1,
+      "new_lines": 0
+    },
+    {
+      "kind": "insert",
+      "old_start": 1,
+      "new_start": 0,
+      "old_lines": 0,
+      "new_lines": 1
+    },
+    {
+      "kind": "equal",
+      "old_start": 1,
+      "new_start": 1,
+      "old_lines": 2,
+      "new_lines": 2
+    }
+  ],
+  "highlights": [
+    {
+      "left": [
+        {
+          "start": 10,
+          "end": 11
+        },
+        {
+          "start": 12,
+          "end": 15
+        },
+        {
+          "start": 20,
+          "end": 23
+        }
+      ],
+      "right": [
+        {
+          "start": 11,
+          "end": 13
+        },
+        {
+          "start": 18,
+          "end": 21
+        }
+      ]
+    }
+  ],
+  "added": 1,
+  "removed": 1,
+  "line_count": 3
+}

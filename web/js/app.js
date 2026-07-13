@@ -1,11 +1,16 @@
-// diff.wtf shell: state, event wiring, timing, and DOM rendering of the wasm
-// engine's DiffResult. Behavior follows docs/design-handoff/README.md
-// (Interactions section); the engine contract is docs/scaffold-spec.md.
+// diff.wtf shell: state, event wiring, timing, and rendering. Behavior
+// follows docs/design-handoff/README.md (Interactions section); the engine
+// contract is docs/scaffold-spec.md. Since M9 the wasm engine returns the
+// sparse v2 result (run-length ops plus highlight ranges); assemble.js
+// rebuilds the renderable rows from it plus the original inputs, and
+// render.js holds the DOM builders.
 //
 // Rendering safety rule (CLAUDE.md): user and diff text enters the DOM only
 // through textContent or text nodes, never through markup parsing.
 
 import init, { compute } from '../pkg/diffwtf_wasm.js';
+import { assembleDiffResult } from './assemble.js';
+import { renderSplit, renderUnified } from './render.js';
 import { sampleA, sampleB } from './samples.js';
 
 const VIEW_KEY = 'diffwtf:view';
@@ -47,8 +52,11 @@ const state = {
 };
 
 let engineReady = false;
-let computed = null; // last DiffResult from the engine
-let computedMs = 0; // performance.now() around the wasm call, serialization included
+let computed = null; // last assembled result (rows, unified, counts)
+// performance.now() around the wasm call PLUS the JS view assembly: with the
+// sparse contract the renderable rows only exist after assembly, so this is
+// the honest input-to-renderable cost the perf badge promises.
+let computedMs = 0;
 
 const leftText = document.getElementById('left-text');
 const rightText = document.getElementById('right-text');
@@ -102,69 +110,6 @@ function syncToggles() {
   btnChar.classList.toggle('active', state.gran === 'char');
 }
 
-// Appends a LineCell's segments to a content cell. Highlighted segments get a
-// span with the intra-line highlight class; plain runs become bare text nodes.
-function appendSegments(parent, segments, hlClass) {
-  for (const seg of segments) {
-    if (seg.highlighted) {
-      const span = document.createElement('span');
-      span.className = hlClass;
-      span.textContent = seg.text;
-      parent.append(span);
-    } else {
-      parent.append(document.createTextNode(seg.text));
-    }
-  }
-}
-
-// tone: 'eq' | 'del' | 'ins' | 'missing', mapped to the design's cell styles.
-function numCell(number, tone) {
-  const span = document.createElement('span');
-  span.className = tone === 'eq' ? 'num' : `num ${tone}`;
-  span.textContent = number == null ? '' : String(number);
-  return span;
-}
-
-function contentCell(cell, tone, hlClass) {
-  const span = document.createElement('span');
-  span.className = tone === 'eq' ? 'cell' : `cell ${tone}`;
-  if (cell) appendSegments(span, cell.segments, hlClass);
-  return span;
-}
-
-function renderSplit(rows) {
-  const frag = document.createDocumentFragment();
-  for (const row of rows) {
-    const div = document.createElement('div');
-    div.className = 'row-split';
-    const leftTone = row.left ? (row.kind === 'equal' ? 'eq' : 'del') : 'missing';
-    const rightTone = row.right ? (row.kind === 'equal' ? 'eq' : 'ins') : 'missing';
-    div.append(
-      numCell(row.left && row.left.number, leftTone),
-      contentCell(row.left, leftTone, 'hl-del'),
-      numCell(row.right && row.right.number, rightTone),
-      contentCell(row.right, rightTone, 'hl-ins'),
-    );
-    frag.append(div);
-  }
-  return frag;
-}
-
-function renderUnified(rows) {
-  const frag = document.createDocumentFragment();
-  for (const row of rows) {
-    const div = document.createElement('div');
-    div.className = 'row-unified';
-    const tone = row.kind === 'equal' ? 'eq' : row.kind === 'delete' ? 'del' : 'ins';
-    const content = document.createElement('span');
-    content.className = tone === 'eq' ? 'cell' : `cell ${tone}`;
-    appendSegments(content, row.segments, tone === 'ins' ? 'hl-ins' : 'hl-del');
-    div.append(numCell(row.old_number, tone), numCell(row.new_number, tone), content);
-    frag.append(div);
-  }
-  return frag;
-}
-
 function render() {
   const empty = !computed || computed.rows.length === 0;
   statAdded.textContent = `+${computed ? computed.added : 0}`;
@@ -190,7 +135,8 @@ function render() {
 function recompute() {
   if (!engineReady) return;
   const t0 = performance.now();
-  computed = compute(state.left, state.right, state.gran);
+  const sparse = compute(state.left, state.right, state.gran);
+  computed = assembleDiffResult(state.left, state.right, sparse);
   computedMs = performance.now() - t0;
   render();
 }

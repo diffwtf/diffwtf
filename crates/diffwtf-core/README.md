@@ -60,6 +60,27 @@ and 1-based line numbers on both sides (`None` on the missing side).
 Concatenating the Equal and Delete ops reconstructs the left input exactly;
 Equal and Insert reconstruct the right.
 
+For transfer-sensitive callers (this is what diff.wtf sends across its wasm
+boundary) there is `diff_sparse`: the same diff as run-length `OpRun`s plus
+intra-line highlight ranges for changed lines only, so the result is sized by
+the number of edits, not by document size. One Equal run covers any number of
+unchanged lines, and a renderer reassembles full rows from the ops plus the
+two original strings; doing so reproduces `diff`'s output exactly. Highlight
+offsets are UTF-16 code units (JavaScript's string indexing unit); if you
+want segment text on the Rust side, use `diff`, which carries it.
+
+```rust
+use diffwtf_core::{diff_sparse, Granularity, LineOpKind};
+
+let sparse = diff_sparse("a\nb\nc", "a\nx\nc", Granularity::Word);
+let kinds: Vec<LineOpKind> = sparse.ops.iter().map(|op| op.kind).collect();
+assert_eq!(
+    kinds,
+    [LineOpKind::Equal, LineOpKind::Delete, LineOpKind::Insert, LineOpKind::Equal]
+);
+assert_eq!((sparse.added, sparse.removed), (1, 1));
+```
+
 ## Features
 
 - `serde`: derives `Serialize` on all output types (off by default).

@@ -1,0 +1,22 @@
+{
+  "ops": [
+    {
+      "kind": "equal",
+      "old_start": 0,
+      "new_start": 0,
+      "old_lines": 2,
+      "new_lines": 2
+    },
+    {
+      "kind": "delete",
+      "old_start": 2,
+      "new_start": 2,
+      "old_lines": 1,
+      "new_lines": 0
+    }
+  ],
+  "highlights": [],
+  "added": 0,
+  "removed": 1,
+  "line_count": 3
+}

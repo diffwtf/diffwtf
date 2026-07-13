@@ -39,3 +39,9 @@ jobs:
 
       - name: wasm build
         run: ./scripts/build-wasm.sh
+
+      # The JS half of the conformance suite: the built wasm boundary against
+      # the ops fixtures, and the shipped view assembler against the
+      # materialized fixtures (see scripts/conformance-web.mjs).
+      - name: JS conformance (wasm boundary + view assembly)
+        run: node scripts/conformance-web.mjs
