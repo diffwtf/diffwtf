@@ -16,7 +16,7 @@
 mod common;
 
 use common::check_invariants;
-use diffwtf_core::{diff, DiffResult, Granularity, RowKind};
+use diffwtf_core::{diff, diff_lines, DiffResult, Granularity, LineOpKind, RowKind};
 
 /// xorshift64: deterministic, seedable, good enough for test-input shuffling.
 struct Rng(u64);
@@ -95,9 +95,72 @@ fn lcs_len(a: &[&str], b: &[&str]) -> u32 {
     dp[0]
 }
 
+/// diff_lines contract: byte-exact reconstructability of both inputs, strictly
+/// sequential 1-based numbering per side, dels-before-inss hunk ordering, and
+/// (outside the whitespace-only empty state, where diff() zeroes its counts by
+/// design) op counts equal to diff()'s added/removed.
+fn check_diff_lines(label: &str, left: &str, right: &str) {
+    let ops = diff_lines(left, right);
+
+    let mut old_texts = Vec::new();
+    let mut new_texts = Vec::new();
+    let (mut ln, mut rn) = (1u32, 1u32);
+    let mut prev_was_insert = false;
+    for op in &ops {
+        match op.kind {
+            LineOpKind::Equal => {
+                assert_eq!(
+                    (op.old_number, op.new_number),
+                    (Some(ln), Some(rn)),
+                    "{label}: equal op numbering"
+                );
+                old_texts.push(op.text.as_str());
+                new_texts.push(op.text.as_str());
+                ln += 1;
+                rn += 1;
+                prev_was_insert = false;
+            }
+            LineOpKind::Delete => {
+                assert_eq!(
+                    (op.old_number, op.new_number),
+                    (Some(ln), None),
+                    "{label}: delete op numbering"
+                );
+                assert!(
+                    !prev_was_insert,
+                    "{label}: delete after insert within a hunk"
+                );
+                old_texts.push(op.text.as_str());
+                ln += 1;
+            }
+            LineOpKind::Insert => {
+                assert_eq!(
+                    (op.old_number, op.new_number),
+                    (None, Some(rn)),
+                    "{label}: insert op numbering"
+                );
+                new_texts.push(op.text.as_str());
+                rn += 1;
+                prev_was_insert = true;
+            }
+        }
+    }
+    assert_eq!(old_texts.join("\n"), left, "{label}: left reconstruction");
+    assert_eq!(new_texts.join("\n"), right, "{label}: right reconstruction");
+
+    if !(left.trim().is_empty() && right.trim().is_empty()) {
+        let result = diff(left, right, Granularity::Word);
+        let dels = ops.iter().filter(|o| o.kind == LineOpKind::Delete).count() as u32;
+        let inss = ops.iter().filter(|o| o.kind == LineOpKind::Insert).count() as u32;
+        assert_eq!(dels, result.removed, "{label}: delete count vs diff()");
+        assert_eq!(inss, result.added, "{label}: insert count vs diff()");
+    }
+}
+
 fn check_case(case: usize, left_lines: &[&str], right_lines: &[&str]) {
     let left = left_lines.join("\n");
     let right = right_lines.join("\n");
+    check_diff_lines(&format!("case {case} (diff_lines)"), &left, &right);
     for (granularity, gran_name) in [(Granularity::Word, "word"), (Granularity::Char, "char")] {
         let label = format!("case {case} ({gran_name}) left={left:?} right={right:?}");
         let result = diff(&left, &right, granularity);

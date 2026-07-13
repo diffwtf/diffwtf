@@ -2,6 +2,7 @@
 name = "diffwtf-core"
 version = "0.1.0"
 description = "Fast Myers diff engine with intra-line refinement — powers diff.wtf"
+readme = "README.md"
 keywords = ["diff", "myers", "text", "wasm"]
 categories = ["text-processing", "algorithms"]
 edition.workspace = true

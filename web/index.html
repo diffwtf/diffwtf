@@ -8,13 +8,13 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://diff.wtf/">
 <meta property="og:title" content="diff.wtf — the fastest diff checker on the web">
-<meta property="og:description" content="Rust → WASM diff. 50–100× faster than JS tools. Your text never leaves your browser.">
+<meta property="og:description" content="Rust → WASM diff that runs entirely in your browser. Your text never leaves the tab.">
 <meta property="og:image" content="https://diff.wtf/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="diff.wtf — the fastest diff checker on the web">
-<meta name="twitter:description" content="Rust → WASM diff. 50–100× faster than JS tools. Your text never leaves your browser.">
+<meta name="twitter:description" content="Rust → WASM diff that runs entirely in your browser. Your text never leaves the tab.">
 <meta name="twitter:image" content="https://diff.wtf/og-card.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -95,18 +95,18 @@
 <section id="how" class="how">
   <div class="how-grid">
     <div class="card">
-      <h3>50–100× faster</h3>
-      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. Large documents diff in milliseconds, not seconds.</p>
+      <h3>Milliseconds, not seconds</h3>
+      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. A 5,000 line file diffs in about 10 ms, measured around the engine call, so the result updates live on every keystroke.</p>
       <div class="chart">
         <div class="chart-bar">
-          <div class="chart-labels"><span>diff.wtf (WASM)</span><span class="accent">4 ms</span></div>
-          <div class="chart-track"><div class="chart-fill wasm"></div></div>
+          <div class="chart-labels"><span>code snippet (the example)</span><span class="accent">0.1 ms</span></div>
+          <div class="chart-track"><div class="chart-fill snippet"></div></div>
         </div>
         <div class="chart-bar">
-          <div class="chart-labels"><span>typical JS diff tool</span><span>~210 ms</span></div>
-          <div class="chart-track"><div class="chart-fill js"></div></div>
+          <div class="chart-labels"><span>5,000 line file (150 KB)</span><span class="accent">10.1 ms</span></div>
+          <div class="chart-track"><div class="chart-fill bigfile"></div></div>
         </div>
-        <span class="chart-caption">1 MB text, line diff — illustrative benchmark</span>
+        <span class="chart-caption">medians of 50 runs on committed fixtures: <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.mjs">scripts/bench-vs-js.mjs</a></span>
       </div>
     </div>
     <div class="card">

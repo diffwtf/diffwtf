@@ -476,17 +476,26 @@ a.wordmark:hover {
   height: 100%;
   border-radius: 3px;
 }
-.chart-fill.wasm {
-  width: 3%;
+/* Bar widths are the two measured medians to scale (0.1 ms vs 10.1 ms; the
+   snippet bar rounds up to a 1% minimum so it still renders). */
+.chart-fill.snippet {
+  width: 1%;
   background: var(--accent);
 }
-.chart-fill.js {
+.chart-fill.bigfile {
   width: 100%;
-  background: #3a4657;
+  background: var(--accent);
 }
 .chart-caption {
   font-size: 10.5px;
   color: #46515f;
+}
+.chart-caption a {
+  color: inherit;
+  text-decoration: underline;
+}
+.chart-caption a:hover {
+  color: #8b98a9;
 }
 
 .code-chip {
