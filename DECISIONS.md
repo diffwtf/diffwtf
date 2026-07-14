@@ -1,5 +1,39 @@
 # DECISIONS
 
+## D7: Deploy caching and pipeline hardening (2026-07-13 incident hotfix)
+Incident: the M9 deploy broke the live site for every returning visitor
+inside a four-hour window. Root cause, confirmed by header probe and local
+reproduction: Cloudflare Pages' default cache policy is asymmetric per
+content type. HTML and .wasm ship with max-age=0, must-revalidate, but .js
+ships with max-age=14400, so a returning browser reused its cached pre-M9
+app.js and wasm glue without revalidation while fetching the new M9 wasm
+module, and the old glue fails to instantiate the new module: LinkError,
+badge stuck on "loading engine…", buttons dead. A hard refresh bypasses the
+HTTP cache, which is why the page looked fine after one.
+Fixes shipped together, each closing a different layer:
+(a) web/_headers pins Cache-Control: no-cache on every path, so every file
+revalidates on every navigation (ETag 304s; the whole site is a few hundred
+KB) and mixed-version caches become impossible going forward;
+(b) scripts/build-wasm.sh stamps the wasm URL inside the generated glue
+with the wasm file's content hash (diffwtf_wasm_bg.wasm?v=<hash>), pairing
+glue and wasm at the cache-key level: a cached glue can only ever fetch the
+wasm bytes it was built against, deploy after deploy;
+(c) a one-time ?v=m10 query on the index.html to app.js and app.js to glue
+imports rescues browsers whose caches were filled under the old four-hour
+policy, which new response headers alone cannot reach; the constant never
+needs to change again because (a) covers all future changes;
+(d) the Deploy workflow is deleted and deploying is now a job inside
+ci.yml: one job builds the site once (pinned wasm-pack v0.15.0), runs the
+gates and the JS conformance suite against that build, and uploads web/ as
+an artifact; the deploy job downloads that exact artifact, smoke-tests it
+(scripts/smoke-live.mjs, headless Chromium), deploys those bytes, then
+smoke-tests the live URL, asserting the engine links, a diff renders, no
+page errors, and the (a) cache policy is actually being served. The smoke
+was verified to fail with exit 1 on a reconstruction of the incident's
+mixed-version state. Previously deploy.yml rebuilt the wasm independently
+of CI, so the deployed bytes were never the tested bytes and nothing ever
+loaded the deployed page.
+
 ## D6: Sparse wasm boundary contract v2 (M9, pending Alex ratification)
 Root cause (issue #9): the v1 boundary marshalled the full DiffResult, both
 views including every Equal row, through serde-wasm-bindgen one JS object at
