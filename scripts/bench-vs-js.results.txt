@@ -1,192 +1,221 @@
-# diff.wtf benchmark: JS reference vs shipped wasm pipeline (sparse v2 boundary)
-# node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 6353c28
+# diff.wtf benchmark: refdiff.mjs and jsdiff vs shipped wasm pipeline (sparse v2 boundary)
+# node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 9780e0e · jsdiff 5.2.2
 # medians, 10 warmup runs per pipeline (huge cases override per bench-cases.mjs), word granularity, interleaved
+# jsdiff is npm `diff` diffLines (line structure); minified-json uses diffWords (line mode is not a like-for-like there)
 # phases and methodology: header comment of scripts/bench-vs-js.mjs
 
 tiny-snippet: the "Load example" pair every visitor sees (343 + 360 chars)
   input: 343 + 360 chars, +6/-6 lines, median of 50
-  js total (compute incl. views)   0.044 ms
+  js total (compute incl. views)   0.049 ms
+  jsdiff total (incl. views)       0.043 ms
   wasm engine (probe)              0.025 ms
-  wasm compute call                0.043 ms
-  wasm result marshal (derived)    0.018 ms
+  wasm compute call                0.047 ms
+  wasm result marshal (derived)    0.022 ms
   wasm view assembly (full, js)    0.015 ms
   wasm row model build (M10)       0.003 ms
   wasm 60-row window (M10)         0.003 ms
-  wasm total (call + assembly)     0.061 ms
-  wasm total (M10 page path)       0.052 ms
-  ratio (js total / wasm total)    0.73x
+  wasm total (call + assembly)     0.067 ms
+  wasm total (M10 page path)       0.055 ms
+  ratio (js total / wasm total)      0.73x
+  ratio (jsdiff total / wasm total)  0.64x
 
 small-10kb: 330 lines / ~10 KB, 12 edited lines in one zone
   input: 10,350 + 10,389 chars, +11/-11 lines, median of 50
-  js total (compute incl. views)   0.211 ms
-  wasm engine (probe)              0.079 ms
-  wasm compute call                0.098 ms
-  wasm result marshal (derived)    0.019 ms
-  wasm view assembly (full, js)    0.042 ms
+  js total (compute incl. views)   0.236 ms
+  jsdiff total (incl. views)       0.158 ms
+  wasm engine (probe)              0.081 ms
+  wasm compute call                0.105 ms
+  wasm result marshal (derived)    0.024 ms
+  wasm view assembly (full, js)    0.043 ms
   wasm row model build (M10)       0.012 ms
-  wasm 60-row window (M10)         0.003 ms
-  wasm total (call + assembly)     0.143 ms
-  wasm total (M10 page path)       0.113 ms
-  ratio (js total / wasm total)    1.48x
+  wasm 60-row window (M10)         0.004 ms
+  wasm total (call + assembly)     0.149 ms
+  wasm total (M10 page path)       0.122 ms
+  ratio (js total / wasm total)      1.58x
+  ratio (jsdiff total / wasm total)  1.06x
 
 mid-40kb: 1,300 lines / ~40 KB, 22 edited lines in one zone
   input: 40,982 + 41,070 chars, +21/-21 lines, median of 50
-  js total (compute incl. views)   3.24 ms
-  wasm engine (probe)              0.283 ms
-  wasm compute call                0.304 ms
-  wasm result marshal (derived)    0.021 ms
-  wasm view assembly (full, js)    0.124 ms
-  wasm row model build (M10)       0.044 ms
+  js total (compute incl. views)   3.30 ms
+  jsdiff total (incl. views)       0.500 ms
+  wasm engine (probe)              0.289 ms
+  wasm compute call                0.318 ms
+  wasm result marshal (derived)    0.029 ms
+  wasm view assembly (full, js)    0.125 ms
+  wasm row model build (M10)       0.045 ms
   wasm 60-row window (M10)         0.002 ms
-  wasm total (call + assembly)     0.432 ms
-  wasm total (M10 page path)       0.351 ms
-  ratio (js total / wasm total)    7.51x
+  wasm total (call + assembly)     0.451 ms
+  wasm total (M10 page path)       0.367 ms
+  ratio (js total / wasm total)      7.32x
+  ratio (jsdiff total / wasm total)  1.11x
 
 large-150kb-sparse: 5,000 lines / 150 KB, 44 edited lines (the committed marketing fixture)
   input: 152,579 + 152,846 chars, +44/-42 lines, median of 50
-  js total (compute incl. views)   5.78 ms
+  js total (compute incl. views)   5.89 ms
+  jsdiff total (incl. views)       1.85 ms
   wasm engine (probe)              1.01 ms
-  wasm compute call                1.03 ms
-  wasm result marshal (derived)    0.026 ms
-  wasm view assembly (full, js)    0.466 ms
-  wasm row model build (M10)       0.175 ms
+  wasm compute call                1.05 ms
+  wasm result marshal (derived)    0.034 ms
+  wasm view assembly (full, js)    0.478 ms
+  wasm row model build (M10)       0.177 ms
   wasm 60-row window (M10)         0.003 ms
-  wasm total (call + assembly)     1.51 ms
-  wasm total (M10 page path)       1.21 ms
-  ratio (js total / wasm total)    3.83x
+  wasm total (call + assembly)     1.52 ms
+  wasm total (M10 page path)       1.23 ms
+  ratio (js total / wasm total)      3.87x
+  ratio (jsdiff total / wasm total)  1.21x
 
 large-150kb-identical: 150 KB, byte-identical sides: measures the identical-input fast path plus boundary floor, NOT engine speed
   input: 152,579 + 152,579 chars, +0/-0 lines, median of 50
-  js total (compute incl. views)   0.679 ms
-  wasm engine (probe)              0.722 ms
-  wasm compute call                0.733 ms
-  wasm result marshal (derived)    0.012 ms
-  wasm view assembly (full, js)    0.367 ms
-  wasm row model build (M10)       0.164 ms
+  js total (compute incl. views)   0.688 ms
+  jsdiff total (incl. views)       1.30 ms
+  wasm engine (probe)              0.728 ms
+  wasm compute call                0.747 ms
+  wasm result marshal (derived)    0.019 ms
+  wasm view assembly (full, js)    0.371 ms
+  wasm row model build (M10)       0.165 ms
   wasm 60-row window (M10)         0.002 ms
-  wasm total (call + assembly)     1.11 ms
-  wasm total (M10 page path)       0.902 ms
-  ratio (js total / wasm total)    0.61x
+  wasm total (call + assembly)     1.12 ms
+  wasm total (M10 page path)       0.916 ms
+  ratio (js total / wasm total)      0.62x
+  ratio (jsdiff total / wasm total)  1.16x
 
 lines-10k: 10,000 lines / ~310 KB, 60 edited lines in one zone
   input: 315,272 + 315,633 chars, +62/-60 lines, median of 50
-  js total (compute incl. views)   5.59 ms
-  wasm engine (probe)              2.01 ms
-  wasm compute call                2.05 ms
-  wasm result marshal (derived)    0.031 ms
-  wasm view assembly (full, js)    0.936 ms
-  wasm row model build (M10)       0.379 ms
+  js total (compute incl. views)   5.73 ms
+  jsdiff total (incl. views)       4.02 ms
+  wasm engine (probe)              2.06 ms
+  wasm compute call                2.09 ms
+  wasm result marshal (derived)    0.029 ms
+  wasm view assembly (full, js)    0.942 ms
+  wasm row model build (M10)       0.380 ms
   wasm 60-row window (M10)         0.002 ms
-  wasm total (call + assembly)     2.98 ms
-  wasm total (M10 page path)       2.43 ms
-  ratio (js total / wasm total)    1.87x
+  wasm total (call + assembly)     3.05 ms
+  wasm total (M10 page path)       2.48 ms
+  ratio (js total / wasm total)      1.88x
+  ratio (jsdiff total / wasm total)  1.32x
 
 large-1mb-sparse: 33,000 lines / ~1 MB, 72 edited lines in one zone
   input: 1,038,890 + 1,039,396 chars, +74/-71 lines, median of 25
-  js total (compute incl. views)   10.15 ms
-  wasm engine (probe)              6.35 ms
-  wasm compute call                6.43 ms
-  wasm result marshal (derived)    0.075 ms
-  wasm view assembly (full, js)    3.56 ms
+  js total (compute incl. views)   10.26 ms
+  jsdiff total (incl. views)       13.09 ms
+  wasm engine (probe)              6.40 ms
+  wasm compute call                6.48 ms
+  wasm result marshal (derived)    0.084 ms
+  wasm view assembly (full, js)    6.39 ms
   wasm row model build (M10)       1.49 ms
   wasm 60-row window (M10)         0.003 ms
-  wasm total (call + assembly)     10.00 ms
-  wasm total (M10 page path)       7.95 ms
-  ratio (js total / wasm total)    1.01x
+  wasm total (call + assembly)     12.94 ms
+  wasm total (M10 page path)       7.97 ms
+  ratio (js total / wasm total)      0.79x
+  ratio (jsdiff total / wasm total)  1.01x
 
 huge-5mb-sparse: 165,000 lines / ~5.4 MB, 89 edited lines in one zone (the M10 large-file target)
   input: 5,263,685 + 5,264,324 chars, +90/-87 lines, median of 7
-  js total (compute incl. views)   82.99 ms
-  wasm engine (probe)              31.47 ms
-  wasm compute call                31.95 ms
-  wasm result marshal (derived)    0.477 ms
-  wasm view assembly (full, js)    24.54 ms
-  wasm row model build (M10)       7.60 ms
-  wasm 60-row window (M10)         0.005 ms
-  wasm total (call + assembly)     58.51 ms
-  wasm total (M10 page path)       40.57 ms
-  ratio (js total / wasm total)    1.42x
+  js total (compute incl. views)   80.58 ms
+  jsdiff total (incl. views)       72.53 ms
+  wasm engine (probe)              31.61 ms
+  wasm compute call                31.72 ms
+  wasm result marshal (derived)    0.105 ms
+  wasm view assembly (full, js)    31.41 ms
+  wasm row model build (M10)       7.53 ms
+  wasm 60-row window (M10)         0.003 ms
+  wasm total (call + assembly)     62.97 ms
+  wasm total (M10 page path)       39.36 ms
+  ratio (js total / wasm total)      1.28x
+  ratio (jsdiff total / wasm total)  1.15x
 
 huge-13mb-sparse: 400,000 lines / ~13 MB, 97 edited lines in one zone
   input: 12,900,754 + 12,901,554 chars, +98/-94 lines, median of 5
-  js total (compute incl. views)   189.87 ms
-  wasm engine (probe)              76.63 ms
-  wasm compute call                76.96 ms
-  wasm result marshal (derived)    0.335 ms
-  wasm view assembly (full, js)    73.17 ms
-  wasm row model build (M10)       18.88 ms
-  wasm 60-row window (M10)         0.010 ms
-  wasm total (call + assembly)     149.85 ms
-  wasm total (M10 page path)       96.57 ms
-  ratio (js total / wasm total)    1.27x
+  js total (compute incl. views)   200.51 ms
+  jsdiff total (incl. views)       247.93 ms
+  wasm engine (probe)              76.87 ms
+  wasm compute call                76.91 ms
+  wasm result marshal (derived)    0.045 ms
+  wasm view assembly (full, js)    96.84 ms
+  wasm row model build (M10)       36.44 ms
+  wasm 60-row window (M10)         0.013 ms
+  wasm total (call + assembly)     173.46 ms
+  wasm total (M10 page path)       113.38 ms
+  ratio (js total / wasm total)      1.16x
+  ratio (jsdiff total / wasm total)  1.43x
 
 large-1mb-spread: 33,000 lines / ~1 MB, ~110 edits spread across the whole file: past the reference LCS bailout, so the reference degrades to a full rewrite while the engine stays minimal; output quality differs and added/removed counts are reported per side
   input: 1,040,315 + 1,040,931 chars, js +32701/-32701 vs wasm +110/-110 (documented divergence: reference degrades past its bailout), median of 25
-  js total (compute incl. views)   69.17 ms
-  wasm engine (probe)              6.70 ms
-  wasm compute call                6.78 ms
-  wasm result marshal (derived)    0.083 ms
-  wasm view assembly (full, js)    4.44 ms
+  js total (compute incl. views)   67.47 ms
+  jsdiff total (incl. views)       14.94 ms
+  wasm engine (probe)              6.69 ms
+  wasm compute call                6.77 ms
+  wasm result marshal (derived)    0.077 ms
+  wasm view assembly (full, js)    3.77 ms
   wasm row model build (M10)       1.50 ms
   wasm 60-row window (M10)         0.004 ms
-  wasm total (call + assembly)     11.21 ms
-  wasm total (M10 page path)       8.30 ms
-  ratio (js total / wasm total)    6.17x
+  wasm total (call + assembly)     10.57 ms
+  wasm total (M10 page path)       8.27 ms
+  ratio (js total / wasm total)      6.38x
+  ratio (jsdiff total / wasm total)  1.41x
 
 complete-rewrite: 3,000 vs 3,000 lines with nothing in common: both engines take their documented degradation path (reference LCS bailout, engine depth cap) and emit the same del-all/ins-all diff
   input: 94,757 + 94,365 chars, +3000/-3000 lines, median of 25
-  js total (compute incl. views)   6.50 ms
-  wasm engine (probe)              17.56 ms
-  wasm compute call                17.69 ms
-  wasm result marshal (derived)    0.131 ms
-  wasm view assembly (full, js)    3.25 ms
-  wasm row model build (M10)       0.121 ms
+  js total (compute incl. views)   6.81 ms
+  jsdiff total (incl. views)       1152.93 ms
+  wasm engine (probe)              18.05 ms
+  wasm compute call                18.39 ms
+  wasm result marshal (derived)    0.342 ms
+  wasm view assembly (full, js)    3.35 ms
+  wasm row model build (M10)       0.122 ms
   wasm 60-row window (M10)         0.023 ms
-  wasm total (call + assembly)     20.95 ms
-  wasm total (M10 page path)       17.84 ms
-  ratio (js total / wasm total)    0.31x
+  wasm total (call + assembly)     21.75 ms
+  wasm total (M10 page path)       18.54 ms
+  ratio (js total / wasm total)      0.31x
+  ratio (jsdiff total / wasm total)  53.01x
 
 adversarial-repeats: 700 lines per side drawn from a 12-line pool, independently shuffled: maximal ambiguity; both engines produce minimal diffs that may differ in shape but must agree on counts
   input: 21,607 + 21,553 chars, +398/-398 lines, median of 50
-  js total (compute incl. views)   7.01 ms
-  wasm engine (probe)              2.91 ms
-  wasm compute call                2.94 ms
-  wasm result marshal (derived)    0.032 ms
-  wasm view assembly (full, js)    0.249 ms
-  wasm row model build (M10)       0.038 ms
+  js total (compute incl. views)   6.34 ms
+  jsdiff total (incl. views)       28.58 ms
+  wasm engine (probe)              2.95 ms
+  wasm compute call                2.99 ms
+  wasm result marshal (derived)    0.036 ms
+  wasm view assembly (full, js)    0.255 ms
+  wasm row model build (M10)       0.039 ms
   wasm 60-row window (M10)         0.005 ms
-  wasm total (call + assembly)     3.19 ms
-  wasm total (M10 page path)       2.99 ms
-  ratio (js total / wasm total)    2.19x
+  wasm total (call + assembly)     3.24 ms
+  wasm total (M10 page path)       3.03 ms
+  ratio (js total / wasm total)      1.96x
+  ratio (jsdiff total / wasm total)  8.82x
 
 minified-json: single-line minified JSON, ~150 KB per side, one value edited mid-string: exercises intra-line refinement with prefix/suffix trimming on one huge line
   input: 145,124 + 145,145 chars, +1/-1 lines, median of 50
-  js total (compute incl. views)   8.58 ms
-  wasm engine (probe)              3.47 ms
+  js total (compute incl. views)   8.50 ms
+  jsdiff total (incl. views)       8.98 ms
+  wasm engine (probe)              3.51 ms
   wasm compute call                3.59 ms
-  wasm result marshal (derived)    0.117 ms
-  wasm view assembly (full, js)    0.012 ms
+  wasm result marshal (derived)    0.083 ms
+  wasm view assembly (full, js)    0.013 ms
   wasm row model build (M10)       0.003 ms
   wasm 60-row window (M10)         0.001 ms
-  wasm total (call + assembly)     3.60 ms
-  wasm total (M10 page path)       3.59 ms
-  ratio (js total / wasm total)    2.38x
+  wasm total (call + assembly)     3.61 ms
+  wasm total (M10 page path)       3.60 ms
+  ratio (js total / wasm total)      2.36x
+  ratio (jsdiff total / wasm total)  2.49x
 
-# summary (medians; ratio = js total / wasm full total, both materialize
+# summary (medians; ratio = baseline total / wasm full total, all materialize
 # every row; the M10 column is the virtualized page path, call + model +
-# one 60-row window, which no js-side equivalent exists for)
-# tiny-snippet: js 0.044 ms vs wasm 0.061 ms -> 0.73x · M10 page 0.052 ms
-# small-10kb: js 0.211 ms vs wasm 0.143 ms -> 1.48x · M10 page 0.113 ms
-# mid-40kb: js 3.24 ms vs wasm 0.432 ms -> 7.51x · M10 page 0.351 ms
-# large-150kb-sparse: js 5.78 ms vs wasm 1.51 ms -> 3.83x · M10 page 1.21 ms
-# large-150kb-identical: js 0.679 ms vs wasm 1.11 ms -> 0.61x · M10 page 0.902 ms  [identical fast path, not an engine-speed number]
-# lines-10k: js 5.59 ms vs wasm 2.98 ms -> 1.87x · M10 page 2.43 ms
-# large-1mb-sparse: js 10.15 ms vs wasm 10.00 ms -> 1.01x · M10 page 7.95 ms
-# huge-5mb-sparse: js 82.99 ms vs wasm 58.51 ms -> 1.42x · M10 page 40.57 ms
-# huge-13mb-sparse: js 189.87 ms vs wasm 149.85 ms -> 1.27x · M10 page 96.57 ms
-# large-1mb-spread: js 69.17 ms vs wasm 11.21 ms -> 6.17x · M10 page 8.30 ms
-# complete-rewrite: js 6.50 ms vs wasm 20.95 ms -> 0.31x · M10 page 17.84 ms
-# adversarial-repeats: js 7.01 ms vs wasm 3.19 ms -> 2.19x · M10 page 2.99 ms
-# minified-json: js 8.58 ms vs wasm 3.60 ms -> 2.38x · M10 page 3.59 ms
-# crossover (sparse-edit size-scaling cases only; ratios are content-dependent, see complete-rewrite): wasm overtakes between tiny-snippet (360 chars, 0.73x) and small-10kb (10,389 chars, 1.48x)
-# (sink 22387, printed so no timed call can be optimized away)
+# one 60-row window, which no baseline-side equivalent exists for)
+# tiny-snippet: refdiff 0.049 ms (0.73x) · jsdiff 0.043 ms (0.64x) vs wasm 0.067 ms · M10 page 0.055 ms
+# small-10kb: refdiff 0.236 ms (1.58x) · jsdiff 0.158 ms (1.06x) vs wasm 0.149 ms · M10 page 0.122 ms
+# mid-40kb: refdiff 3.30 ms (7.32x) · jsdiff 0.500 ms (1.11x) vs wasm 0.451 ms · M10 page 0.367 ms
+# large-150kb-sparse: refdiff 5.89 ms (3.87x) · jsdiff 1.85 ms (1.21x) vs wasm 1.52 ms · M10 page 1.23 ms
+# large-150kb-identical: refdiff 0.688 ms (0.62x) · jsdiff 1.30 ms (1.16x) vs wasm 1.12 ms · M10 page 0.916 ms  [identical fast path, not an engine-speed number]
+# lines-10k: refdiff 5.73 ms (1.88x) · jsdiff 4.02 ms (1.32x) vs wasm 3.05 ms · M10 page 2.48 ms
+# large-1mb-sparse: refdiff 10.26 ms (0.79x) · jsdiff 13.09 ms (1.01x) vs wasm 12.94 ms · M10 page 7.97 ms
+# huge-5mb-sparse: refdiff 80.58 ms (1.28x) · jsdiff 72.53 ms (1.15x) vs wasm 62.97 ms · M10 page 39.36 ms
+# huge-13mb-sparse: refdiff 200.51 ms (1.16x) · jsdiff 247.93 ms (1.43x) vs wasm 173.46 ms · M10 page 113.38 ms
+# large-1mb-spread: refdiff 67.47 ms (6.38x) · jsdiff 14.94 ms (1.41x) vs wasm 10.57 ms · M10 page 8.27 ms
+# complete-rewrite: refdiff 6.81 ms (0.31x) · jsdiff 1152.93 ms (53.01x) vs wasm 21.75 ms · M10 page 18.54 ms
+# adversarial-repeats: refdiff 6.34 ms (1.96x) · jsdiff 28.58 ms (8.82x) vs wasm 3.24 ms · M10 page 3.03 ms
+# minified-json: refdiff 8.50 ms (2.36x) · jsdiff 8.98 ms (2.49x) vs wasm 3.61 ms · M10 page 3.60 ms
+# jsdiff parity band (0.90x-1.25x, typical diffs): small-10kb, mid-40kb, large-150kb-sparse, large-1mb-sparse, huge-5mb-sparse
+# jsdiff tail wins (>1.25x, pathological): complete-rewrite 53.01x, adversarial-repeats 8.82x, minified-json 2.49x, huge-13mb-sparse 1.43x, large-1mb-spread 1.41x, lines-10k 1.32x
+# crossover (sparse-edit size-scaling cases only; ratios are content-dependent, see complete-rewrite): wasm overtakes between tiny-snippet (360 chars, 0.73x) and small-10kb (10,389 chars, 1.58x)
+# (sink 51401, printed so no timed call can be optimized away)

@@ -57,6 +57,7 @@ const GH = 'https://github.com/diffwtf/diffwtf/blob/main';
 // Design tokens (docs/design-handoff/README.md); presentation only.
 const ACCENT = '#3fd68f';
 const RED = '#f85149';
+const JSDIFF = '#e3b341'; // amber: the jsdiff (competitor) series, distinct from the green engine and gray refdiff
 const TEXT2 = '#8b98a9';
 const FAINT = '#46515f';
 const GRID = '#161c24';
@@ -87,6 +88,7 @@ function num(s) {
 
 const VS_JS_PHASES = {
   'js total (compute incl. views)': 'js',
+  'jsdiff total (incl. views)': 'jsdiff',
   'wasm engine (probe)': 'probe',
   'wasm compute call': 'call',
   'wasm result marshal (derived)': 'marshal',
@@ -104,9 +106,13 @@ const BROWSER_PHASES = {
 };
 
 function parseHeader(lines, file) {
-  const env = lines[1]?.match(/^# (node \S+) · (.+) · commit (\S+)$/);
+  // jsdiff is present on the vs-js header, absent on the browser header.
+  const env = lines[1]?.match(/^# (node \S+) · (.+?) · commit (\S+)(?: · jsdiff (\S+))?$/);
   if (!env) fail(`${file}: unrecognized environment header line: ${lines[1]}`);
-  return { node: env[1], cpu: env[2], commit: env[3], method: lines[2]?.replace(/^# /, '') ?? '' };
+  return {
+    node: env[1], cpu: env[2], commit: env[3], jsdiff: env[4] ?? null,
+    method: lines[2]?.replace(/^# /, '') ?? '',
+  };
 }
 
 function parseCases(lines, phaseMap, ratioLabels, file) {
@@ -161,7 +167,10 @@ function parseVsJs() {
   const cases = parseCases(
     lines.filter((l) => !l.startsWith('#')),
     VS_JS_PHASES,
-    { 'ratio (js total / wasm total)': 'total' },
+    {
+      'ratio (js total / wasm total)': 'total',
+      'ratio (jsdiff total / wasm total)': 'jsdiff',
+    },
     'bench-vs-js.results.txt',
   );
   const crossLine = lines.find((l) => l.startsWith('# crossover'));
@@ -185,6 +194,9 @@ function parseVsJs() {
     if (!src) fail(`artifact case ${c.name} is not in scripts/bench-cases.mjs`);
     if (src.note !== c.note) fail(`case ${c.name}: note differs between artifact and bench-cases.mjs`);
     c.sizeScaling = Boolean(src.sizeScaling);
+    c.jsdiffMode = src.jsdiffMode ?? 'lines';
+    c.ambiguous = Boolean(src.ambiguous);
+    c.countsMayDiffer = Boolean(src.countsMayDiffer);
     c.size = Math.max(c.leftChars, c.rightChars);
   }
   return { meta, cases, crossover };
@@ -247,14 +259,16 @@ ${body}
 // Charts (hand-rolled inline SVG, numbers baked at generation time)
 // ---------------------------------------------------------------------------
 
-// Log-log scaling chart over the size-scaling family: js vs wasm totals.
+// Log-log scaling chart over the size-scaling family: refdiff, jsdiff, and
+// wasm totals. The visual point is that jsdiff (amber) and wasm (green) track
+// together — both are Myers — while refdiff (gray) runs higher and crosses.
 function svgScaling(family, crossover) {
   const W = 720; const H = 380;
   const PL = 84; const PR = 36; const PT = 30; const PB = 74;
   const plotW = W - PL - PR;
   const plotH = H - PT - PB;
   const xs = family.map((c) => c.size);
-  const ys = family.flatMap((c) => [c.phases.js.val, c.phases.total.val]);
+  const ys = family.flatMap((c) => [c.phases.js.val, c.phases.jsdiff.val, c.phases.total.val]);
   const xDom = [Math.min(...xs) / 1.4, Math.max(...xs) * 1.4];
   const yDom = [Math.min(...ys) / 1.7, Math.max(...ys) * 1.7];
   const lx = (v) =>
@@ -291,84 +305,102 @@ function svgScaling(family, crossover) {
   parts.push(svgText(PL + plotW / 2, H - 30, 'input size, characters per side (log scale)', { anchor: 'middle' }));
   parts.push(svgText(24, PT + plotH / 2, 'median time, ms (log scale)', { anchor: 'middle', rotate: -90 }));
 
-  // Series: js dashed circles, wasm solid squares (shape and dash carry the
-  // distinction, not color alone).
+  // Three series; shape and dash carry the distinction, not color alone:
+  // refdiff dashed circles, jsdiff dotted diamonds, wasm solid squares.
   const jsPts = family.map((c) => [lx(c.size), ly(c.phases.js.val), c]);
+  const jsdiffPts = family.map((c) => [lx(c.size), ly(c.phases.jsdiff.val), c]);
   const wasmPts = family.map((c) => [lx(c.size), ly(c.phases.total.val), c]);
   parts.push(
     `<polyline points="${jsPts.map(([x, y]) => `${x},${y}`).join(' ')}" fill="none" stroke="${TEXT2}" stroke-width="1.5" stroke-dasharray="5 4"/>`,
   );
   parts.push(
+    `<polyline points="${jsdiffPts.map(([x, y]) => `${x},${y}`).join(' ')}" fill="none" stroke="${JSDIFF}" stroke-width="1.75" stroke-dasharray="2 3"/>`,
+  );
+  parts.push(
     `<polyline points="${wasmPts.map(([x, y]) => `${x},${y}`).join(' ')}" fill="none" stroke="${ACCENT}" stroke-width="2"/>`,
   );
   for (const [x, y, c] of jsPts) {
-    parts.push(`<circle cx="${x}" cy="${y}" r="3.5" fill="${TEXT2}"><title>${esc(`${c.name}: JS reference ${ms(c.phases.js)}`)}</title></circle>`);
+    parts.push(`<circle cx="${x}" cy="${y}" r="3.5" fill="${TEXT2}"><title>${esc(`${c.name}: refdiff ${ms(c.phases.js)}`)}</title></circle>`);
+  }
+  for (const [x, y, c] of jsdiffPts) {
+    parts.push(`<path d="M ${x} ${(Number(y) - 4).toFixed(1)} L ${(Number(x) + 4).toFixed(1)} ${y} L ${x} ${(Number(y) + 4).toFixed(1)} L ${(Number(x) - 4).toFixed(1)} ${y} Z" fill="${JSDIFF}"><title>${esc(`${c.name}: jsdiff ${ms(c.phases.jsdiff)}`)}</title></path>`);
   }
   for (const [x, y, c] of wasmPts) {
     parts.push(
       `<rect x="${(x - 3.5).toFixed(1)}" y="${(y - 3.5).toFixed(1)}" width="7" height="7" fill="${ACCENT}"><title>${esc(`${c.name}: wasm pipeline ${ms(c.phases.total)}`)}</title></rect>`,
     );
   }
-  // Legend in the top-left region, which the data never enters (both
-  // curves rise left to right); marker shape and line style carry the
-  // series distinction alongside color.
+  // Legend in the top-left region, which the data never enters (all curves
+  // rise left to right); marker shape and line style carry the series
+  // distinction alongside color.
   const lgX = PL + 14;
   const lg1 = PT + 14;
-  const lg2 = PT + 34;
+  const lg2 = PT + 32;
+  const lg3 = PT + 50;
   parts.push(`<line x1="${lgX}" y1="${lg1 - 4}" x2="${lgX + 26}" y2="${lg1 - 4}" stroke="${ACCENT}" stroke-width="2"/>`);
   parts.push(`<rect x="${lgX + 9.5}" y="${lg1 - 7.5}" width="7" height="7" fill="${ACCENT}"/>`);
   parts.push(svgText(lgX + 34, lg1, 'wasm pipeline (compute + view assembly)', { fill: ACCENT, weight: 700 }));
-  parts.push(`<line x1="${lgX}" y1="${lg2 - 4}" x2="${lgX + 26}" y2="${lg2 - 4}" stroke="${TEXT2}" stroke-width="1.5" stroke-dasharray="5 4"/>`);
-  parts.push(`<circle cx="${lgX + 13}" cy="${lg2 - 4}" r="3.5" fill="${TEXT2}"/>`);
-  parts.push(svgText(lgX + 34, lg2, 'JS reference (refdiff.mjs)', { weight: 700 }));
+  parts.push(`<line x1="${lgX}" y1="${lg2 - 4}" x2="${lgX + 26}" y2="${lg2 - 4}" stroke="${JSDIFF}" stroke-width="1.75" stroke-dasharray="2 3"/>`);
+  parts.push(`<path d="M ${lgX + 13} ${lg2 - 8} L ${lgX + 17} ${lg2 - 4} L ${lgX + 13} ${lg2} L ${lgX + 9} ${lg2 - 4} Z" fill="${JSDIFF}"/>`);
+  parts.push(svgText(lgX + 34, lg2, 'jsdiff (npm diff, Myers)', { fill: JSDIFF, weight: 700 }));
+  parts.push(`<line x1="${lgX}" y1="${lg3 - 4}" x2="${lgX + 26}" y2="${lg3 - 4}" stroke="${TEXT2}" stroke-width="1.5" stroke-dasharray="5 4"/>`);
+  parts.push(`<circle cx="${lgX + 13}" cy="${lg3 - 4}" r="3.5" fill="${TEXT2}"/>`);
+  parts.push(svgText(lgX + 34, lg3, 'refdiff.mjs (in-repo reference)', { weight: 700 }));
 
   const first = family[0];
   const last = family[family.length - 1];
   return `<svg class="bench-svg" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="scaling-title scaling-desc">
-    <title id="scaling-title">Median diff time by input size: JS reference vs wasm pipeline</title>
-    <desc id="scaling-desc">Line chart with logarithmic axes over the ${family.length} size-scaling cases, from ${first.name} (${first.size.toLocaleString('en-US')} characters) to ${last.name} (${last.size.toLocaleString('en-US')} characters). The wasm pipeline overtakes the JS reference between ${crossover.below.charsStr} and ${crossover.above.charsStr} characters. Exact values are in the table below the chart.</desc>
+    <title id="scaling-title">Median diff time by input size: refdiff, jsdiff, and the wasm pipeline</title>
+    <desc id="scaling-desc">Line chart with logarithmic axes over the ${family.length} size-scaling cases, from ${first.name} (${first.size.toLocaleString('en-US')} characters) to ${last.name} (${last.size.toLocaleString('en-US')} characters). The jsdiff and wasm pipeline curves track close together across the whole range because both are Myers; the in-repo refdiff reference runs higher over the mid range and the wasm pipeline overtakes it between ${crossover.below.charsStr} and ${crossover.above.charsStr} characters. Exact values are in the table below the chart.</desc>
     ${parts.join('\n    ')}
   </svg>`;
 }
 
-// Horizontal ratio bars for every case, zero baseline, parity line at 1x.
+// Horizontal ratio bars for every case, jsdiff time over wasm time, on a LOG
+// axis: the ratios span from about 0.6x to over 50x, so a linear axis would
+// crush the parity cluster to nothing. Parity line at 1x. Bars start at the
+// domain floor and run to the ratio; above 1x the engine is faster.
 function svgRatios(cases) {
-  const ROW = 27; const PT = 34; const PBOT = 52; const LABELW = 236;
+  const ROW = 27; const PT = 34; const PBOT = 52; const LABELW = 176;
   const W = 720; const H = PT + cases.length * ROW + PBOT;
-  const plotX = LABELW; const plotW = W - LABELW - 130;
-  const maxRatio = Math.ceil(Math.max(...cases.map((c) => Number(c.ratios.total))));
-  const rx = (v) => (plotX + (v / maxRatio) * plotW).toFixed(1);
+  const plotX = LABELW; const plotW = W - LABELW - 96;
+  const ratios = cases.map((c) => Number(c.ratios.jsdiff));
+  const xDom = [Math.min(...ratios, 1) / 1.3, Math.max(...ratios) * 1.3];
+  const lx = (v) =>
+    (plotX + ((Math.log10(v) - Math.log10(xDom[0])) / (Math.log10(xDom[1]) - Math.log10(xDom[0]))) * plotW);
+  const bottom = PT + cases.length * ROW;
 
   const parts = [];
-  for (let v = 0; v <= maxRatio; v++) {
-    const x = rx(v);
-    parts.push(`<line x1="${x}" y1="${PT - 8}" x2="${x}" y2="${PT + cases.length * ROW}" stroke="${GRID}"/>`);
-    parts.push(svgText(x, PT + cases.length * ROW + 16, `${v}x`, { anchor: 'middle', fill: FAINT }));
+  for (const v of [0.5, 1, 2, 5, 10, 20, 50, 100]) {
+    if (v < xDom[0] || v > xDom[1]) continue;
+    const x = lx(v).toFixed(1);
+    parts.push(`<line x1="${x}" y1="${PT - 8}" x2="${x}" y2="${bottom}" stroke="${GRID}"/>`);
+    parts.push(svgText(Number(x), bottom + 16, `${v}x`, { anchor: 'middle', fill: FAINT }));
   }
-  // Parity line under the bars and labels so text stays readable where it
-  // crosses; the line shows through in the row gaps.
-  parts.push(`<line x1="${rx(1)}" y1="${PT - 8}" x2="${rx(1)}" y2="${PT + cases.length * ROW}" stroke="${TEXT2}" stroke-dasharray="3 3"/>`);
-  parts.push(svgText(Number(rx(1)), PT - 14, '1x = same speed as the JS reference', { anchor: 'middle' }));
+  // Parity line, drawn under the bars; it shows through in the row gaps.
+  parts.push(`<line x1="${lx(1).toFixed(1)}" y1="${PT - 8}" x2="${lx(1).toFixed(1)}" y2="${bottom}" stroke="${TEXT2}" stroke-dasharray="3 3"/>`);
+  parts.push(svgText(lx(1), PT - 14, '1x = same speed as jsdiff', { anchor: 'middle' }));
+  const x0 = lx(xDom[0]);
   cases.forEach((c, i) => {
     const y = PT + i * ROW;
-    const ratio = Number(c.ratios.total);
+    const ratio = Number(c.ratios.jsdiff);
     const win = ratio >= 1;
     const suffix = c.name === 'large-150kb-identical'
       ? ' (fast path, not engine speed)'
-      : win ? '' : ' (slower)';
+      : win ? '' : ' (slower than jsdiff)';
     parts.push(svgText(plotX - 10, y + 12, c.name, { anchor: 'end' }));
     parts.push(
-      `<rect x="${plotX}" y="${y + 3}" width="${((ratio / maxRatio) * plotW).toFixed(1)}" height="12" rx="3" fill="${win ? ACCENT : RED}"/>`,
+      `<rect x="${x0.toFixed(1)}" y="${y + 3}" width="${Math.max(1, lx(ratio) - x0).toFixed(1)}" height="12" rx="3" fill="${win ? ACCENT : RED}"/>`,
     );
-    parts.push(svgText(Number(rx(ratio)) + 8, y + 13, `${c.ratios.total}x${suffix}`, { fill: win ? ACCENT : RED }));
+    parts.push(svgText(lx(ratio) + 8, y + 13, `${c.ratios.jsdiff}x${suffix}`, { fill: win ? ACCENT : RED }));
   });
   parts.push(
-    svgText(plotX + plotW / 2, H - 14, 'JS reference time / wasm time (linear, zero baseline; above 1x, wasm is faster)', { anchor: 'middle' }),
+    svgText(plotX + plotW / 2, H - 14, 'jsdiff time / wasm time (log scale; right of 1x, the engine is faster)', { anchor: 'middle' }),
   );
 
   return `<svg class="bench-svg" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="ratios-title ratios-desc">
-    <title id="ratios-title">Speed ratio per benchmark case, JS reference time divided by wasm time</title>
-    <desc id="ratios-desc">Bar chart of all ${cases.length} cases on a linear scale from a zero baseline with the 1x parity line marked. Bars left of 1x are cases where the wasm pipeline is slower. Exact values are in the table below the chart.</desc>
+    <title id="ratios-title">Speed ratio per benchmark case, jsdiff time divided by wasm time</title>
+    <desc id="ratios-desc">Bar chart of all ${cases.length} cases on a logarithmic scale with the 1x parity line marked. Most cases cluster near 1x (parity with jsdiff); two pathological cases extend far to the right where the engine is many times faster. Bars left of 1x are cases where the wasm pipeline is slower than jsdiff. Exact values are in the table below the chart.</desc>
     ${parts.join('\n    ')}
   </svg>`;
 }
@@ -376,7 +408,8 @@ function svgRatios(cases) {
 // Phase breakdown of the 150 KB marketing fixture, linear, zero baseline.
 function svgPhases(c) {
   const rows = [
-    ['JS reference total, for context', c.phases.js, TEXT2],
+    ['refdiff total, for context', c.phases.js, TEXT2],
+    ['jsdiff total, for context', c.phases.jsdiff, JSDIFF],
     ['wasm engine compute (probe)', c.phases.probe, ACCENT],
     ['result marshal across the boundary', c.phases.marshal, ACCENT],
     ['full view assembly (pre-M10 page path)', c.phases.assemble, ACCENT],
@@ -464,7 +497,9 @@ function buildRegions() {
   const big = need('large-150kb-sparse');
   const identical = need('large-150kb-identical');
   const rewrite = need('complete-rewrite');
+  const adversarial = need('adversarial-repeats');
   const spread = need('large-1mb-spread');
+  const minified = need('minified-json');
   const family = vsJs.cases.filter((c) => c.sizeScaling).sort((a, b) => a.size - b.size);
   const browser150 = browser.cases.find((c) => c.name === 'large-150kb-sparse');
   if (!browser150) fail('expected case large-150kb-sparse in bench-browser.results.txt');
@@ -473,69 +508,89 @@ function buildRegions() {
     .map((c) => Number(c.ratios.withRender));
   const renderParity = { lo: Math.min(...browserRatios).toFixed(2), hi: Math.max(...browserRatios).toFixed(2) };
 
-  if (tiny.iterations !== big.iterations) {
-    fail('tiny-snippet and large-150kb-sparse iteration counts differ; reword the home caption consciously');
-  }
-
   const regions = new Map();
 
-  // ---- home page: the "Why it's fast" card ------------------------------
-  const bigApprox = (Math.round(big.phases.total.val * 10) / 10).toString();
+  // ---- home page: the "Milliseconds, not seconds" card ------------------
+  // Honest framing: near parity with jsdiff on a typical diff (the two bars),
+  // with the payoff being the bounded worst case (the caption). No inflated
+  // multiplier is marketed; the worst-case numbers are the ones that justify
+  // the engine, and they are stated plainly.
   const barPct = (v, max) => `${Math.max(1, Math.round((v / max) * 100))}%`;
-  regions.set('home-chart', `      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. In the committed Node benchmark, the engine call plus full view assembly for a 5,000-line file takes about ${bigApprox} ms.</p>
+  const homeMax = Math.max(big.phases.total.val, big.phases.jsdiff.val);
+  const rewriteMs = (v) => (v >= 1000 ? `${(v / 1000).toFixed(2)} s` : `${v.toFixed(0)} ms`);
+  regions.set('home-chart', `      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. On an everyday diff it runs about even with <a href="https://github.com/kpdecker/jsdiff">jsdiff</a>, the standard JavaScript library — both finish a 5,000-line file in under two milliseconds. The payoff is the worst case: jsdiff's time climbs with the number of edits, while this engine's is capped.</p>
       <div class="chart">
         <div class="chart-bar">
-          <div class="chart-labels"><span>code snippet (the example)</span><span class="accent">${ms(tiny.phases.total)}</span></div>
-          <div class="chart-track"><div class="chart-fill" style="width: ${barPct(tiny.phases.total.val, big.phases.total.val)}"></div></div>
+          <div class="chart-labels"><span>5,000-line file · this engine</span><span class="accent">${ms(big.phases.total)}</span></div>
+          <div class="chart-track"><div class="chart-fill" style="width: ${barPct(big.phases.total.val, homeMax)}"></div></div>
         </div>
         <div class="chart-bar">
-          <div class="chart-labels"><span>5,000-line file (150 KB)</span><span class="accent">${ms(big.phases.total)}</span></div>
-          <div class="chart-track"><div class="chart-fill" style="width: ${barPct(big.phases.total.val, big.phases.total.val)}"></div></div>
+          <div class="chart-labels"><span>5,000-line file · jsdiff</span><span>${ms(big.phases.jsdiff)}</span></div>
+          <div class="chart-track"><div class="chart-fill" style="width: ${barPct(big.phases.jsdiff.val, homeMax)}; background: ${JSDIFF}"></div></div>
         </div>
-        <span class="chart-caption">medians of ${big.iterations} runs on committed fixtures: <a href="${GH}/scripts/bench-vs-js.mjs">scripts/bench-vs-js.mjs</a> · <a href="benchmarks.html">all benchmarks</a></span>
+        <span class="chart-caption">near parity on a typical diff; on a 3,000-line rewrite jsdiff takes ${rewriteMs(rewrite.phases.jsdiff.val)} and this engine ${rewriteMs(rewrite.phases.total.val)}. medians on committed fixtures: <a href="${GH}/scripts/bench-vs-js.mjs">scripts/bench-vs-js.mjs</a> · <a href="benchmarks.html">all benchmarks</a></span>
       </div>`);
 
   // ---- benchmarks page ---------------------------------------------------
-  regions.set('bench-meta', `  <p class="bench-updated">committed run: ${esc(vsJs.meta.node)} · ${esc(vsJs.meta.cpu)} · commit ${esc(vsJs.meta.commit)} · <a href="${GH}/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a></p>`);
+  regions.set('bench-meta', `  <p class="bench-updated">committed run: ${esc(vsJs.meta.node)} · ${esc(vsJs.meta.cpu)} · commit ${esc(vsJs.meta.commit)} · jsdiff ${esc(vsJs.meta.jsdiff ?? '?')} · <a href="${GH}/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a></p>`);
 
   const familyRows = family.map((c) => [
     c.name, c.note, c.charsStr, String(c.iterations),
-    ms(c.phases.js), ms(c.phases.total), ms(c.phases.m10), `${c.ratios.total}x`,
+    ms(c.phases.js), ms(c.phases.jsdiff), ms(c.phases.total), ms(c.phases.m10), `${c.ratios.jsdiff}x`,
   ]);
-  const aboveCrossover = family.filter((c) => Number(c.ratios.total) >= 1);
-  const minCase = aboveCrossover.reduce((a, b) => (Number(a.ratios.total) <= Number(b.ratios.total) ? a : b));
-  const maxCase = aboveCrossover.reduce((a, b) => (Number(a.ratios.total) >= Number(b.ratios.total) ? a : b));
-  regions.set('bench-scaling', `  <p>The size-scaling family uses the same line-based content shape at growing sizes, with edits concentrated in a bounded zone. Per case, the chart shows the median of the JS reference total against the wasm pipeline total (compute call plus full view assembly, the JS-comparable number). For this family, the measured crossover is bracketed between ${vsJs.crossover.below.name} (${crossoverStr(vsJs.crossover.below)}) and ${vsJs.crossover.above.name} (${crossoverStr(vsJs.crossover.above)}). Above that measured bracket, the wasm total stays at or ahead of the reference on every case in the family, from ${minCase.ratios.total}x (${minCase.name}, near parity) to ${maxCase.ratios.total}x (${maxCase.name}). The ratio is content-dependent, not size-monotonic; the full matrix below has the exceptions.</p>
+  // jsdiff parity band across the family, excluding the sub-crossover tiny case
+  // where the wasm boundary floor (not the diff) dominates.
+  const nonTiny = family.filter((c) => c.name !== 'tiny-snippet');
+  const jFamRatios = nonTiny.map((c) => Number(c.ratios.jsdiff));
+  const jLo = Math.min(...jFamRatios).toFixed(2);
+  const jHi = Math.max(...jFamRatios).toFixed(2);
+  const tinyCase = family.find((c) => c.name === 'tiny-snippet');
+  regions.set('bench-scaling', `  <p>The size-scaling family uses the same line-based content shape at growing sizes, with edits concentrated in a bounded zone. The chart plots three pipelines per case: the wasm engine, jsdiff, and the in-repo refdiff reference. The story is the two Myers implementations — jsdiff and the engine — tracking together: setting aside ${tinyCase.name} (${tinyCase.ratios.jsdiff}x, where the wasm boundary floor costs more than the diff itself), the wasm pipeline stays within ${jLo}x to ${jHi}x of jsdiff across four orders of magnitude of input size. This is parity, and it is expected: both are Myers, so both scale the same way, and the engine's edge is the constant factor of running in wasm behind a compact boundary rather than a better asymptotic curve.</p>
+  <p>refdiff, a naive LCS, is the slower line over the mid range; the wasm pipeline overtakes it between ${vsJs.crossover.below.name} (${crossoverStr(vsJs.crossover.below)}) and ${vsJs.crossover.above.name} (${crossoverStr(vsJs.crossover.above)}). That crossover is a refdiff artifact, not the headline — the headline is parity with a real competitor, and the pathological cases where that parity breaks in the engine's favor are in the next section.</p>
   <div class="bench-card">
     ${svgScaling(family, vsJs.crossover)}
   </div>
-  ${table('scaling-table', 'Size-scaling cases: medians per pipeline (data for the chart above)', ['case', 'what it is', 'input, chars', 'runs', 'JS reference', 'wasm (call + assembly)', 'wasm (M10 page path)', 'ratio'], familyRows, 2)}
-  <p class="bench-note">The M10 page-path column models compute plus lazy row-model construction and one 60-row render window. It excludes the worker round trip used by the current site for larger inputs, so it is a pipeline breakdown rather than a live per-keystroke measurement. The comparison ratio uses the full-assembly total, where both sides do the same work.</p>`);
+  ${table('scaling-table', 'Size-scaling cases: medians per pipeline (data for the chart above)', ['case', 'what it is', 'input, chars', 'runs', 'refdiff', 'jsdiff', 'wasm (call + assembly)', 'wasm (M10 page path)', 'ratio vs jsdiff'], familyRows, 2)}
+  <p class="bench-note">The M10 page-path column models compute plus lazy row-model construction and one 60-row render window. It excludes the worker round trip used by the current site for larger inputs, so it is a pipeline breakdown rather than a live per-keystroke measurement. The comparison ratio is jsdiff total over the wasm full-assembly total, where both materialize every row.</p>`);
 
-  regions.set('bench-losses', `  <p>The same benchmark run includes these cases where the wasm pipeline is slower or not directly comparable, measured with the same methodology as the wins:</p>
+  // ---- the bounded-worst-case thesis ------------------------------------
+  const tailRows = [
+    [rewrite.name, rewrite.charsStr, ms(rewrite.phases.jsdiff), ms(rewrite.phases.total), `${rewrite.ratios.jsdiff}x`,
+      'identical diff (delete-all then insert-all)'],
+    [adversarial.name, adversarial.charsStr, ms(adversarial.phases.jsdiff), ms(adversarial.phases.total), `${adversarial.ratios.jsdiff}x`,
+      'equally minimal, different shape'],
+  ];
+  regions.set('bench-tail', `  <p>Parity holds until the diff gets hard. jsdiff, like every textbook Myers implementation, runs in O(ND) time, where D is the number of edits between the two sides: cheap when the files are close, but the cost climbs with the edit distance and runs away when the files are far apart. This engine caps its search depth at a fixed bound (<code>MAX_D = 2048</code> line edits after trimming, <a href="${GH}/crates/diffwtf-core/src/myers.rs">crates/diffwtf-core/src/myers.rs</a>); past the bound it degrades deterministically to a delete-all/insert-all diff instead of searching further. That cap was added as a safety valve against pathological memory use, and it turns out to be the entire performance story: the engine's worst case is bounded, and jsdiff's is not.</p>
+  <p>Two cases in the run cross that line. On <strong>${rewrite.name}</strong> — ${esc(rewrite.note)} — jsdiff spends ${ms(rewrite.phases.jsdiff)} where the engine spends ${ms(rewrite.phases.total)}, a ${rewrite.ratios.jsdiff}x difference, and the two produce the <em>identical</em> output: both delete every left line then insert every right line. Same answer, ${rewrite.ratios.jsdiff}x less time. On <strong>${adversarial.name}</strong> — ${esc(adversarial.note)} — the gap is ${adversarial.ratios.jsdiff}x (${ms(adversarial.phases.jsdiff)} against ${ms(adversarial.phases.total)}); here the two diffs are both minimal (they agree on the ${esc(adversarial.counts.replace(' lines', ''))} line counts) but pick a different equally-minimal shape, which is expected on maximally ambiguous input and is disclosed rather than papered over.</p>
+  ${table('tail-table', 'The pathological tail: where jsdiff runs away and the engine does not', ['case', 'input, chars', 'jsdiff', 'wasm (call + assembly)', 'ratio vs jsdiff', 'output vs jsdiff'], tailRows, 1)}
+  <p class="bench-note">These are the diffs that make a browser tab hang: ${ms(rewrite.phases.jsdiff)} for a 3,000-line rewrite is well past the threshold where a keystroke feels broken. Nobody notices a 3 ms diff; everybody notices a one-second one. A bounded worst case is worth more here than a faster typical case, and it is why the two rows above — not the parity band above them — are the reason to compile the engine to wasm.</p>`);
+
+  regions.set('bench-losses', `  <p>The same run includes the cases where the wasm pipeline is slower than jsdiff or not directly comparable, measured with the same methodology as everything else:</p>
   <ul>
-    <li><strong>Tiny inputs.</strong> On ${esc(tiny.note)}, the JS reference wins: ${ms(tiny.phases.js)} against ${ms(tiny.phases.total)} for the wasm pipeline (${tiny.ratios.total}x). Below the crossover the wasm boundary floor costs more than the diff itself.</li>
-    <li><strong>Complete rewrites.</strong> The ${rewrite.name} case is ${esc(rewrite.note)}. The wasm side is slower: ${ms(rewrite.phases.total)} against ${ms(rewrite.phases.js)} (${rewrite.ratios.total}x, about a third of the JS speed). Tracked openly as <a href="https://github.com/diffwtf/diffwtf/issues/12">issue #12</a>.</li>
-    <li><strong>Identical inputs.</strong> The ${identical.name} case (${identical.ratios.total}x) measures a disclosed product shortcut, not engine speed: since M9 the engine short-circuits byte-identical inputs to a single Equal run. It is in the matrix because hiding a below-1x number would be spin; it must not be read as an engine measurement in either direction.</li>
-    <li><strong>Once the DOM dominates.</strong> In a real Chromium tab, rendering every row of a large diff into the DOM costs far more than computing it, so end to end the two pipelines finish within ${renderParity.lo}x to ${renderParity.hi}x of each other on the browser-measured cases (identical fast path aside). The browser section below shows this in full; since M10 the site renders a virtualized window instead of every row, which is what keeps large diffs responsive.</li>
+    <li><strong>Tiny inputs.</strong> On ${esc(tiny.note)}, jsdiff wins: ${ms(tiny.phases.jsdiff)} against ${ms(tiny.phases.total)} for the wasm pipeline (${tiny.ratios.jsdiff}x). Both are a fraction of a millisecond and both are far below the threshold anyone can perceive; below this size the fixed cost of crossing the wasm boundary is larger than the diff itself, and it does not matter.</li>
+    <li><strong>Identical inputs.</strong> The ${identical.name} case (${identical.ratios.jsdiff}x vs jsdiff) measures a disclosed product shortcut, not engine speed: since M9 the engine short-circuits byte-identical inputs to a single Equal run. It is in the matrix because hiding a below-1x number would be spin; it must not be read as an engine measurement in either direction.</li>
+    <li><strong>Complete rewrites, against refdiff specifically.</strong> The ${rewrite.name} case is the engine's biggest win against jsdiff (${rewrite.ratios.jsdiff}x, in the section above), but against the in-repo refdiff it is a loss: ${ms(rewrite.phases.total)} against refdiff's ${ms(rewrite.phases.js)} (${rewrite.ratios.total}x). refdiff's naive LCS bails out to delete-all/insert-all even more cheaply than the engine's capped Myers reaches the same answer; all three pipelines emit the identical diff here. So the honest reading depends on the baseline, and both are shown: a win against a real competitor, a loss against a reference that degrades faster. The engine's absolute cost on this case is tracked as <a href="https://github.com/diffwtf/diffwtf/issues/12">issue #12</a>.</li>
+    <li><strong>Once the DOM dominates.</strong> In a real Chromium tab, rendering every row of a large diff into the DOM costs far more than computing it, so end to end the pipelines finish within ${renderParity.lo}x to ${renderParity.hi}x of each other on the browser-measured cases (identical fast path aside) — and against jsdiff, where compute is already near parity, that tie is immediate. The browser section below shows this in full; since M10 the site renders a virtualized window instead of every row, which is what keeps large diffs responsive.</li>
   </ul>`);
 
   const ratioRows = vsJs.cases.map((c) => [
     c.name, c.note, c.charsStr, String(c.iterations),
-    ms(c.phases.js), ms(c.phases.total), ms(c.phases.m10), `${c.ratios.total}x`,
+    ms(c.phases.js), ms(c.phases.jsdiff), ms(c.phases.total), `${c.ratios.jsdiff}x`, `${c.ratios.total}x`,
   ]);
-  regions.set('bench-ratios', `  <div class="bench-card">
+  regions.set('bench-ratios', `  <p>Every case in the run, ranked by the jsdiff bar. The cluster around 1x is the parity band; the two bars that run off to the right are the bounded-worst-case wins. The <code>vs refdiff</code> column is the in-repo comparison for context — where it and <code>vs jsdiff</code> disagree, both are shown rather than the flattering one alone.</p>
+  <div class="bench-card">
     ${svgRatios(vsJs.cases)}
   </div>
-  ${table('ratios-table', 'All cases: medians per pipeline (data for the chart above)', ['case', 'what it is', 'input, chars', 'runs', 'JS reference', 'wasm (call + assembly)', 'wasm (M10 page path)', 'ratio'], ratioRows, 2)}
-  <p class="bench-note">Counts note: on ${spread.name} the two pipelines legitimately disagree on output, ${esc(spread.counts)}. Its ratio compares different amounts of useful work and favors the engine, which stays minimal where the reference degrades. The ${identical.name} bar measures the disclosed identical-input fast path plus the boundary floor, not engine speed.</p>`);
+  ${table('ratios-table', 'All cases: medians per pipeline (data for the chart above)', ['case', 'what it is', 'input, chars', 'runs', 'refdiff', 'jsdiff', 'wasm (call + assembly)', 'vs jsdiff', 'vs refdiff'], ratioRows, 2)}
+  <p class="bench-note">Counts note: jsdiff (real Myers) agrees with the engine on added/removed line counts on every case, which the benchmark asserts before timing. refdiff does not: on ${spread.name} it degrades past its LCS bailout (${esc(spread.counts)}), so its ratio there compares different amounts of useful work and its <code>vs refdiff</code> number favors the engine. The ${identical.name} bar measures the disclosed identical-input fast path plus the boundary floor, not engine speed. ${esc(minified.name)} compares against jsdiff diffWords, not diffLines: its single line makes the line-level diff a non-comparison against the engine's intra-line refinement.</p>`);
 
   regions.set('bench-phases', `  <p>Phases of the wasm pipeline on ${big.name}: ${esc(big.note)}. The result marshal is the cost of crossing the wasm boundary, the part M9 rewrote: with the sparse contract it is ${ms(big.phases.marshal)} here, measured as the difference between the compute call and a probe call that does the same work but returns only a checksum.</p>
   <div class="bench-card">
     ${svgPhases(big)}
   </div>
   ${table('phases-table', 'Phase medians on large-150kb-sparse (data for the chart above)', ['phase', 'median'], [
-    ['JS reference total (compute incl. views), for context', ms(big.phases.js)],
+    ['refdiff total (compute incl. views), for context', ms(big.phases.js)],
+    ['jsdiff total (incl. views), for context', ms(big.phases.jsdiff)],
     ['wasm engine compute (probe)', ms(big.phases.probe)],
     ['wasm compute call (engine + boundary)', ms(big.phases.call)],
     ['result marshal across the boundary (derived)', ms(big.phases.marshal)],
@@ -552,6 +607,7 @@ function buildRegions() {
     `${c.ratios.noRender}x`, `${c.ratios.withRender}x`,
   ]);
   regions.set('bench-browser', `  <p>The Node numbers above compare compute. A browser tab also has to render the result, and painting every row of a large diff into the DOM dwarfs either compute path. Measured in headless Chromium on the real page (${esc(browser.meta.node)} · ${esc(browser.meta.cpu)} · commit ${esc(browser.meta.commit)}, <a href="${GH}/scripts/bench-browser.results.txt">scripts/bench-browser.results.txt</a>): on the 150 KB fixture the shared split-view DOM render is ${ms(browser150.phases.render)}, so despite a ${browser150.ratios.noRender}x compute win the end-to-end ratio including render is ${browser150.ratios.withRender}x. Stated plainly: once the full DOM render dominates, the engines tie. That is why M10 made the site render a virtualized window instead of every row.</p>
+  <p class="bench-note">The browser run predates the jsdiff baseline and still compares against refdiff, so its compute ratios are the refdiff numbers, not the jsdiff ones; the point it exists to make — that a full DOM render swamps any compute difference — is independent of which baseline the compute is measured against. Against jsdiff, where compute is already near parity on these sparse cases, the end-to-end tie is only more immediate. Adding jsdiff to the browser harness is follow-up work; the Node run above is where the engine-versus-jsdiff comparison lives.</p>
   <div class="bench-card">
     ${svgBrowser(browser150)}
   </div>
@@ -565,10 +621,11 @@ function buildRegions() {
   const wasmBytes = statSync(WASM_BIN).size;
   regions.set('bench-size', `  <p>The engine ships as a <span id="wasm-size" data-bytes="${wasmBytes}">${(wasmBytes / 1000).toFixed(1)} KB</span> WebAssembly binary (measured from the built <code>web/pkg/diffwtf_wasm_bg.wasm</code>) plus generated JS glue. The site uses static HTML, CSS, and vanilla-JS modules; diff computation requires no server round trip.</p>`);
 
-  regions.set('bench-methodology', `  <p>Every displayed benchmark value is parsed out of the committed artifacts by <a href="${GH}/scripts/gen-bench-page.mjs">scripts/gen-bench-page.mjs</a>, which regenerates this page and the home page chart; CI fails if the pages and artifacts diverge.</p>
-  <p>Main run (<a href="${GH}/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a>): ${esc(vsJs.meta.node)} · ${esc(vsJs.meta.cpu)} · commit ${esc(vsJs.meta.commit)}. Reported values are ${esc(vsJs.meta.method)}. The baseline is this repository's JS reference implementation: useful for comparing equivalent project pipelines, but not a benchmark of competing diff products. Both pipelines run in the same Node process (V8, the engine Chrome uses) with the same wasm engine module the site ships; the surrounding production dispatch and rendering path is described separately. Inputs are committed fixtures or deterministic seeded generators (<a href="${GH}/scripts/bench-cases.mjs">scripts/bench-cases.mjs</a>), reproducible from any checkout; the per-case descriptions in the tables above are the generators' own notes. Sanity checks run before timing: both pipelines must agree on added and removed counts (except the disclosed ${spread.name} divergence), and assembled output must reconstruct both inputs byte for byte.</p>
-  <p>Fairness notes, disclosed: the sparse-edit generators keep edits inside a bounded zone so both engines produce the identical minimal diff (same work, same output); the spread and rewrite cases deliberately step outside that and are labeled with what changes. The identical-input fast path is a product shortcut and never backs an engine-speed claim. The Node runner is not a browser page; the browser run exists to check that the story holds there.</p>
-  <p>Reproduce it: <code>./scripts/build-wasm.sh</code> then <code>node scripts/bench-vs-js.mjs</code> (and <code>node scripts/bench-browser.mjs</code> for the Chromium run), from <a href="https://github.com/diffwtf/diffwtf">the repo</a>. The committed results files are regenerated by piping stdout there and committing the diff, so the artifact history is reviewable like any other code.</p>`);
+  regions.set('bench-methodology', `  <p>Every displayed benchmark value is parsed out of the committed artifacts by <a href="${GH}/scripts/gen-bench-page.mjs">scripts/gen-bench-page.mjs</a>, which regenerates this page and the home page chart; CI fails if the pages and artifacts diverge. CI never runs the benchmark itself — it only checks the committed numbers against the committed pages — so no benchmark dependency is installed in CI.</p>
+  <p>Main run (<a href="${GH}/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a>): ${esc(vsJs.meta.node)} · ${esc(vsJs.meta.cpu)} · commit ${esc(vsJs.meta.commit)} · jsdiff ${esc(vsJs.meta.jsdiff ?? '?')}. Reported values are ${esc(vsJs.meta.method)}. Three pipelines run in the same Node process (V8, the engine Chrome uses), interleaved so none gets a systematic cache or GC advantage: the wasm engine module the site ships, jsdiff (npm <code>diff</code>, pinned; a dev-only dependency of the benchmark harness that is never bundled into the site), and the in-repo refdiff reference. jsdiff runs diffLines for line structure, except <a href="${GH}/scripts/bench-cases.mjs">${esc(minified.name)}</a>, whose single line makes diffLines a non-comparison, where it runs diffWords to match the engine's intra-line refinement. Inputs are committed fixtures or deterministic seeded generators (<a href="${GH}/scripts/bench-cases.mjs">scripts/bench-cases.mjs</a>), reproducible from any checkout.</p>
+  <p>Sanity checks run before timing: jsdiff and the engine must agree on added and removed line counts on every case (jsdiff is real Myers, so it agrees even where refdiff degrades past its LCS bailout on ${spread.name}), and every pipeline's output must reconstruct both inputs. All three totals include materializing every row into a renderable view, so the comparison charges each pipeline for the same view work and none is credited for skipping it. On ${rewrite.name} the engine and jsdiff verifiably emit the identical diff; on the ambiguous ${adversarial.name} they emit different but equally minimal diffs — both are checked, not assumed.</p>
+  <p>Fairness notes, disclosed: the engine additionally refines within changed lines (word-level highlights) on the line cases, which jsdiff diffLines does not, so on the sparse cases the engine reaches parity while doing more, not less. The identical-input fast path is a product shortcut and never backs an engine-speed claim. The Node runner is not a browser page; the browser run exists to check that the story holds there.</p>
+  <p>Reproduce it: <code>npm install</code> (to fetch the pinned jsdiff), <code>./scripts/build-wasm.sh</code>, then <code>node scripts/bench-vs-js.mjs</code> (and <code>node scripts/bench-browser.mjs</code> for the Chromium run), from <a href="https://github.com/diffwtf/diffwtf">the repo</a>. The committed results files are regenerated by piping stdout there and committing the diff, so the artifact history is reviewable like any other code.</p>`);
 
   return regions;
 }
@@ -586,7 +643,7 @@ const FILES = [
   {
     path: BENCH_HTML,
     regions: [
-      'bench-meta', 'bench-scaling', 'bench-losses', 'bench-ratios',
+      'bench-meta', 'bench-scaling', 'bench-tail', 'bench-losses', 'bench-ratios',
       'bench-phases', 'bench-browser', 'bench-size', 'bench-methodology',
     ],
   },

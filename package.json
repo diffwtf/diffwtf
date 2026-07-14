@@ -1,0 +1,10 @@
+{
+  "name": "diffwtf-bench-harness",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only tooling manifest: pins jsdiff (npm `diff`) for the benchmark harness (scripts/bench-vs-js.mjs, scripts/bench-browser.mjs), which times the shipped wasm engine against a second, industry-standard baseline. This package is NOT the product and is NOT shipped: nothing under web/ imports it, the site is still static HTML/CSS/vanilla-JS ES modules with no bundler, and CI never installs it (the drift gate parses committed artifacts, it does not run the benchmark). The whole repo is already ES modules (scripts are .mjs, web/js/*.js use import/export, web/pkg carries its own manifest); `type: module` just states that so Node stops reparsing web/js/*.js and warning about it.",
+  "devDependencies": {
+    "diff": "5.2.2"
+  }
+}

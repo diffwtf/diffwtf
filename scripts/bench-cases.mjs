@@ -243,6 +243,11 @@ export const CASES = [
   {
     name: 'minified-json',
     note: 'single-line minified JSON, ~150 KB per side, one value edited mid-string: exercises intra-line refinement with prefix/suffix trimming on one huge line',
+    // jsdiff's line-level diffLines sees two unequal single lines and emits
+    // del-1/ins-1 without looking inside them, so it is not comparable to the
+    // engine's intra-line word refinement here. Compare against diffWords, the
+    // like-for-like at the engine's word granularity (issue #29, Addition 2).
+    jsdiffMode: 'words',
     build() {
       return minifiedJson(4000, 'key2000');
     },

@@ -145,7 +145,10 @@ try {
   const bars = await page.evaluate(() =>
     [...document.querySelectorAll('.chart-fill')].map((el) => ({
       width: el.getBoundingClientRect().width,
-      value: el.closest('.chart-bar')?.querySelector('.chart-labels .accent')?.textContent ?? '',
+      // The value is the last label span; it carries .accent on the engine bar
+      // but not on the jsdiff comparison bar (a different series color), so read
+      // it by position rather than by color class.
+      value: el.closest('.chart-bar')?.querySelector('.chart-labels span:last-child')?.textContent ?? '',
     })),
   );
   check(
