@@ -278,11 +278,12 @@ function svgScaling(family, crossover) {
       parts.push(svgText(PL - 8, Number(y) + 4, String(v), { anchor: 'end', fill: FAINT }));
     }
   }
-  // Crossover band between the two flanking cases.
+  // Crossover band between the two flanking cases, labeled at its foot
+  // where no data points sit.
   const cbX0 = lx(crossover.below.chars);
   const cbX1 = lx(crossover.above.chars);
   parts.push(`<rect x="${cbX0}" y="${PT}" width="${(cbX1 - cbX0).toFixed(1)}" height="${plotH}" fill="${ACCENT}" fill-opacity="0.07"/>`);
-  parts.push(svgText(Number(cbX1) + 6, PT + 14, 'crossover', { fill: ACCENT }));
+  parts.push(svgText((Number(cbX0) + Number(cbX1)) / 2, PT + plotH - 12, 'crossover', { anchor: 'middle', fill: ACCENT }));
 
   // Axes.
   parts.push(`<line x1="${PL}" y1="${PT + plotH}" x2="${PL + plotW}" y2="${PT + plotH}" stroke="${BORDER}"/>`);
@@ -308,11 +309,18 @@ function svgScaling(family, crossover) {
       `<rect x="${(x - 3.5).toFixed(1)}" y="${(y - 3.5).toFixed(1)}" width="7" height="7" fill="${ACCENT}"><title>${esc(`${c.name}: wasm pipeline ${ms(c.phases.total)}`)}</title></rect>`,
     );
   }
-  // Direct series labels near mid-curve, js above its line, wasm below its
-  // line (the js curve sits above the wasm curve past the crossover).
-  const mid = Math.min(4, family.length - 1);
-  parts.push(svgText(Number(jsPts[mid][0]), Number(jsPts[mid][1]) - 12, 'JS reference (refdiff.mjs)', { anchor: 'middle', weight: 700 }));
-  parts.push(svgText(Number(wasmPts[mid][0]), Number(wasmPts[mid][1]) + 22, 'wasm pipeline (compute + view assembly)', { anchor: 'middle', fill: ACCENT, weight: 700 }));
+  // Legend in the top-left region, which the data never enters (both
+  // curves rise left to right); marker shape and line style carry the
+  // series distinction alongside color.
+  const lgX = PL + 14;
+  const lg1 = PT + 14;
+  const lg2 = PT + 34;
+  parts.push(`<line x1="${lgX}" y1="${lg1 - 4}" x2="${lgX + 26}" y2="${lg1 - 4}" stroke="${ACCENT}" stroke-width="2"/>`);
+  parts.push(`<rect x="${lgX + 9.5}" y="${lg1 - 7.5}" width="7" height="7" fill="${ACCENT}"/>`);
+  parts.push(svgText(lgX + 34, lg1, 'wasm pipeline (compute + view assembly)', { fill: ACCENT, weight: 700 }));
+  parts.push(`<line x1="${lgX}" y1="${lg2 - 4}" x2="${lgX + 26}" y2="${lg2 - 4}" stroke="${TEXT2}" stroke-width="1.5" stroke-dasharray="5 4"/>`);
+  parts.push(`<circle cx="${lgX + 13}" cy="${lg2 - 4}" r="3.5" fill="${TEXT2}"/>`);
+  parts.push(svgText(lgX + 34, lg2, 'JS reference (refdiff.mjs)', { weight: 700 }));
 
   const first = family[0];
   const last = family[family.length - 1];
@@ -337,12 +345,16 @@ function svgRatios(cases) {
     parts.push(`<line x1="${x}" y1="${PT - 8}" x2="${x}" y2="${PT + cases.length * ROW}" stroke="${GRID}"/>`);
     parts.push(svgText(x, PT + cases.length * ROW + 16, `${v}x`, { anchor: 'middle', fill: FAINT }));
   }
+  // Parity line under the bars and labels so text stays readable where it
+  // crosses; the line shows through in the row gaps.
+  parts.push(`<line x1="${rx(1)}" y1="${PT - 8}" x2="${rx(1)}" y2="${PT + cases.length * ROW}" stroke="${TEXT2}" stroke-dasharray="3 3"/>`);
+  parts.push(svgText(Number(rx(1)), PT - 14, '1x = same speed as the JS reference', { anchor: 'middle' }));
   cases.forEach((c, i) => {
     const y = PT + i * ROW;
     const ratio = Number(c.ratios.total);
     const win = ratio >= 1;
     const suffix = c.name === 'large-150kb-identical'
-      ? ' (fast path, see note)'
+      ? ' (fast path, not engine speed)'
       : win ? '' : ' (slower)';
     parts.push(svgText(plotX - 10, y + 12, c.name, { anchor: 'end' }));
     parts.push(
@@ -350,9 +362,6 @@ function svgRatios(cases) {
     );
     parts.push(svgText(Number(rx(ratio)) + 8, y + 13, `${c.ratios.total}x${suffix}`, { fill: win ? ACCENT : RED }));
   });
-  // Parity line on top of the bars so it stays visible where bars cross it.
-  parts.push(`<line x1="${rx(1)}" y1="${PT - 8}" x2="${rx(1)}" y2="${PT + cases.length * ROW}" stroke="${TEXT2}" stroke-dasharray="3 3"/>`);
-  parts.push(svgText(Number(rx(1)), PT - 14, '1x = same speed as the JS reference', { anchor: 'middle' }));
   parts.push(
     svgText(plotX + plotW / 2, H - 14, 'JS reference time / wasm time (linear, zero baseline; above 1x, wasm is faster)', { anchor: 'middle' }),
   );
@@ -493,7 +502,11 @@ function buildRegions() {
     c.name, c.note, c.charsStr, String(c.iterations),
     ms(c.phases.js), ms(c.phases.total), ms(c.phases.m10), `${c.ratios.total}x`,
   ]);
-  regions.set('bench-scaling', `  <p>The size-scaling family is the same content shape at growing sizes: line-based text with a bounded zone of edits, the shape diff tools see most. Per case, the chart shows the median of the JS reference total against the wasm pipeline total (compute call plus full view assembly, the js-comparable number). The wasm pipeline overtakes the JS reference between ${tiny.name} (${crossoverStr(vsJs.crossover.below)}) and ${vsJs.crossover.above.name} (${crossoverStr(vsJs.crossover.above)}): below roughly 10 KB the JS reference is the faster tool for this shape, above it the wasm pipeline wins by ${familySpan(family)} on these cases. The ratio is content-dependent, not size-monotonic; the full matrix below has the exceptions.</p>
+  const aboveCrossover = family.filter((c) => Number(c.ratios.total) >= 1);
+  const minCase = aboveCrossover.reduce((a, b) => (Number(a.ratios.total) <= Number(b.ratios.total) ? a : b));
+  const maxCase = aboveCrossover.reduce((a, b) => (Number(a.ratios.total) >= Number(b.ratios.total) ? a : b));
+  const crossKb = Math.round(vsJs.crossover.above.chars / 1024);
+  regions.set('bench-scaling', `  <p>The size-scaling family is the same content shape at growing sizes: line-based text with a bounded zone of edits, the shape diff tools see most. Per case, the chart shows the median of the JS reference total against the wasm pipeline total (compute call plus full view assembly, the js-comparable number). The wasm pipeline overtakes the JS reference between ${vsJs.crossover.below.name} (${crossoverStr(vsJs.crossover.below)}) and ${vsJs.crossover.above.name} (${crossoverStr(vsJs.crossover.above)}), so the crossover sits just under ${crossKb} KB: below it the JS reference is the faster tool for this shape, above it the wasm total stays at or ahead of the reference on every case in the family, from ${minCase.ratios.total}x (${minCase.name}, near parity) to ${maxCase.ratios.total}x (${maxCase.name}). The ratio is content-dependent, not size-monotonic; the full matrix below has the exceptions.</p>
   <div class="bench-card">
     ${svgScaling(family, vsJs.crossover)}
   </div>
@@ -502,8 +515,8 @@ function buildRegions() {
 
   regions.set('bench-losses', `  <p>The same benchmark run contains every case where the wasm pipeline is not the right tool, measured with the identical methodology as the wins:</p>
   <ul>
-    <li><strong>Tiny inputs.</strong> On the ${esc(tiny.note)}, the JS reference wins: ${ms(tiny.phases.js)} against ${ms(tiny.phases.total)} for the wasm pipeline (${tiny.ratios.total}x). Below the crossover the wasm boundary floor costs more than the diff itself.</li>
-    <li><strong>Complete rewrites.</strong> On ${esc(rewrite.note)}. The wasm side is slower: ${ms(rewrite.phases.total)} against ${ms(rewrite.phases.js)} (${rewrite.ratios.total}x, about a third of the JS speed). Tracked openly as <a href="https://github.com/diffwtf/diffwtf/issues/12">issue #12</a>.</li>
+    <li><strong>Tiny inputs.</strong> On ${esc(tiny.note)}, the JS reference wins: ${ms(tiny.phases.js)} against ${ms(tiny.phases.total)} for the wasm pipeline (${tiny.ratios.total}x). Below the crossover the wasm boundary floor costs more than the diff itself.</li>
+    <li><strong>Complete rewrites.</strong> The ${rewrite.name} case is ${esc(rewrite.note)}. The wasm side is slower: ${ms(rewrite.phases.total)} against ${ms(rewrite.phases.js)} (${rewrite.ratios.total}x, about a third of the JS speed). Tracked openly as <a href="https://github.com/diffwtf/diffwtf/issues/12">issue #12</a>.</li>
     <li><strong>Identical inputs.</strong> The ${identical.name} case (${identical.ratios.total}x) measures a disclosed product shortcut, not engine speed: since M9 the engine short-circuits byte-identical inputs to a single Equal run. It is in the matrix because hiding a below-1x number would be spin; it must not be read as an engine measurement in either direction.</li>
     <li><strong>Once the DOM dominates.</strong> In a real Chromium tab, rendering every row of a large diff into the DOM costs far more than computing it, so end to end the two pipelines finish within ${renderParity.lo}x to ${renderParity.hi}x of each other on the browser-measured cases (identical fast path aside). The browser section below shows this in full; since M10 the site renders a virtualized window instead of every row, which is what keeps large diffs responsive.</li>
   </ul>`);
@@ -516,9 +529,9 @@ function buildRegions() {
     ${svgRatios(vsJs.cases)}
   </div>
   ${table('ratios-table', 'All cases: medians per pipeline (data for the chart above)', ['case', 'what it is', 'input, chars', 'runs', 'JS reference', 'wasm (call + assembly)', 'wasm (M10 page path)', 'ratio'], ratioRows, 2)}
-  <p class="bench-note">Counts note: on ${spread.name} the two pipelines legitimately disagree on output (${esc(spread.counts)}); its ratio compares different amounts of useful work and favors the engine, which stays minimal where the reference degrades.</p>`);
+  <p class="bench-note">Counts note: on ${spread.name} the two pipelines legitimately disagree on output, ${esc(spread.counts)}. Its ratio compares different amounts of useful work and favors the engine, which stays minimal where the reference degrades. The ${identical.name} bar measures the disclosed identical-input fast path plus the boundary floor, not engine speed.</p>`);
 
-  regions.set('bench-phases', `  <p>Phases of the wasm pipeline on the committed 150 KB marketing fixture (${esc(big.note)}). The result marshal is the cost of crossing the wasm boundary, the part M9 rewrote: with the sparse contract it is ${ms(big.phases.marshal)} here, measured as the difference between the compute call and a probe call that does the same work but returns only a checksum.</p>
+  regions.set('bench-phases', `  <p>Phases of the wasm pipeline on ${big.name}: ${esc(big.note)}. The result marshal is the cost of crossing the wasm boundary, the part M9 rewrote: with the sparse contract it is ${ms(big.phases.marshal)} here, measured as the difference between the compute call and a probe call that does the same work but returns only a checksum.</p>
   <div class="bench-card">
     ${svgPhases(big)}
   </div>
@@ -548,8 +561,10 @@ function buildRegions() {
 
   // Baked from the locally built binary; --check verifies the baked value
   // against the current build within tolerance instead of byte-comparing.
+  // KB as bytes/1000, the convention DECISIONS.md D6 already uses for this
+  // binary (45.7 KB).
   const wasmBytes = statSync(WASM_BIN).size;
-  regions.set('bench-size', `  <p>The engine ships as a <span id="wasm-size" data-bytes="${wasmBytes}">${(wasmBytes / 1024).toFixed(1)} KB</span> WebAssembly binary (measured from the built <code>web/pkg/diffwtf_wasm_bg.wasm</code>), plus a few KB of JS glue. The whole site is a handful of static files: no framework, no bundler, no server round trips.</p>`);
+  regions.set('bench-size', `  <p>The engine ships as a <span id="wasm-size" data-bytes="${wasmBytes}">${(wasmBytes / 1000).toFixed(1)} KB</span> WebAssembly binary (measured from the built <code>web/pkg/diffwtf_wasm_bg.wasm</code>), plus a few KB of JS glue. The whole site is a handful of static files: no framework, no bundler, no server round trips.</p>`);
 
   regions.set('bench-methodology', `  <p>Every number on this page is parsed out of the committed benchmark artifacts by <a href="${GH}/scripts/gen-bench-page.mjs">scripts/gen-bench-page.mjs</a>, which regenerates this page and the home page chart; CI fails if the pages and the artifacts diverge. Nothing here is hand-typed.</p>
   <p>Main run (<a href="${GH}/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a>): ${esc(vsJs.meta.node)} · ${esc(vsJs.meta.cpu)} · commit ${esc(vsJs.meta.commit)}. Reported values are ${esc(vsJs.meta.method)}. Both pipelines run in the same Node process (V8, the engine Chrome uses) on byte-identical modules to what the site ships; the browser table above repeats the core cases in headless Chromium to confirm the relative numbers carry over. Inputs are committed fixtures or deterministic seeded generators (<a href="${GH}/scripts/bench-cases.mjs">scripts/bench-cases.mjs</a>), reproducible from any checkout; the per-case descriptions in the tables above are the generators' own notes. Sanity checks run before timing: both pipelines must agree on added and removed counts (except the disclosed ${spread.name} divergence), and assembled output must reconstruct both inputs byte for byte.</p>
@@ -561,11 +576,6 @@ function buildRegions() {
 
 function crossoverStr(side) {
   return `${side.charsStr} chars, ${side.ratio}x`;
-}
-
-function familySpan(family) {
-  const above = family.filter((c) => Number(c.ratios.total) >= 1).map((c) => Number(c.ratios.total));
-  return `${Math.min(...above).toFixed(2)}x to ${Math.max(...above).toFixed(2)}x`;
 }
 
 // ---------------------------------------------------------------------------
@@ -597,7 +607,7 @@ function checkWasmSize(current) {
   const m = current.match(/data-bytes="(\d+)">([\d.]+) KB</);
   if (!m) fail('bench-size region: baked wasm size not found');
   const baked = Number(m[1]);
-  if ((baked / 1024).toFixed(1) !== m[2]) {
+  if ((baked / 1000).toFixed(1) !== m[2]) {
     fail(`bench-size region: displayed ${m[2]} KB does not derive from data-bytes=${baked}`);
   }
   const actual = statSync(WASM_BIN).size;

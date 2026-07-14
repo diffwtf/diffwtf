@@ -60,6 +60,14 @@ jobs:
       - name: JS conformance (wasm boundary + view assembly)
         run: node scripts/conformance-web.mjs
 
+      # M11 gate (issue #11): every number on the home chart and the
+      # benchmarks page must equal what the committed benchmark artifacts
+      # generate; any drift fails here instead of shipping. Runs after the
+      # wasm build because the page's engine-size claim is verified against
+      # the built binary.
+      - name: Benchmark pages match the committed artifacts
+        run: node scripts/gen-bench-page.mjs --check
+
       - name: Install Playwright (pinned)
         run: |
           npm install --no-save --no-package-lock "playwright@${PLAYWRIGHT_VERSION}"
@@ -71,6 +79,12 @@ jobs:
       # deploy ships.
       - name: Virtualization and worker checks (Playwright)
         run: node scripts/check-virtual.mjs --serve web
+
+      # M11 gate: the benchmarks page renders, its charts carry accessible
+      # names and table fallbacks, the home page links to it, and neither
+      # page makes an off-origin request (fonts aside).
+      - name: Benchmarks page render check (Playwright)
+        run: node scripts/check-bench-page.mjs --serve web
 
       # The deploy job ships exactly these bytes; web/pkg is gitignored, so
       # the artifact is the only way the tested build reaches the deploy.

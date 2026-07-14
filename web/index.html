@@ -28,6 +28,7 @@
   </div>
   <nav class="site-nav">
     <a class="nav-link" href="#how">Why it's fast</a>
+    <a class="nav-link" href="benchmarks.html">Benchmarks</a>
     <a class="btn-github" href="https://github.com/diffwtf/diffwtf">Star on GitHub</a>
   </nav>
 </header>
@@ -101,18 +102,24 @@
   <div class="how-grid">
     <div class="card">
       <h3>Milliseconds, not seconds</h3>
-      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. A 5,000 line file diffs in about 10 ms, measured around the engine call, so the result updates live on every keystroke.</p>
+      <!-- Everything between the bench:gen markers is generated from the
+           committed benchmark artifacts by scripts/gen-bench-page.mjs and
+           verified by CI; edit the artifacts and regenerate, never the
+           numbers (issue #11). -->
+<!-- bench:gen home-chart -->
+      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. A 5,000 line file diffs in about 1.5 ms, measured around the engine call including view assembly, so the result updates live on every keystroke.</p>
       <div class="chart">
         <div class="chart-bar">
-          <div class="chart-labels"><span>code snippet (the example)</span><span class="accent">0.1 ms</span></div>
-          <div class="chart-track"><div class="chart-fill snippet"></div></div>
+          <div class="chart-labels"><span>code snippet (the example)</span><span class="accent">0.061 ms</span></div>
+          <div class="chart-track"><div class="chart-fill" style="width: 4%"></div></div>
         </div>
         <div class="chart-bar">
-          <div class="chart-labels"><span>5,000 line file (150 KB)</span><span class="accent">10.1 ms</span></div>
-          <div class="chart-track"><div class="chart-fill bigfile"></div></div>
+          <div class="chart-labels"><span>5,000 line file (150 KB)</span><span class="accent">1.51 ms</span></div>
+          <div class="chart-track"><div class="chart-fill" style="width: 100%"></div></div>
         </div>
-        <span class="chart-caption">medians of 50 runs on committed fixtures: <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.mjs">scripts/bench-vs-js.mjs</a></span>
+        <span class="chart-caption">medians of 50 runs on committed fixtures: <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.mjs">scripts/bench-vs-js.mjs</a> · <a href="benchmarks.html">all benchmarks</a></span>
       </div>
+<!-- bench:endgen home-chart -->
     </div>
     <div class="card">
       <h3>Your text never leaves the browser</h3>

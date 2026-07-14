@@ -1,5 +1,39 @@
 # DECISIONS
 
+## D9: Benchmarks page and single-source performance numbers (M11, pending Alex ratification)
+Goal (issue #11): the site's speed numbers must be mechanically tied to the
+committed benchmark artifacts so they can never silently go stale again.
+Route: web/benchmarks.html, linked from the home nav ("Benchmarks") and from
+the home chart caption ("all benchmarks"); the page reuses the privacy page
+shell and only existing design tokens.
+Mechanism: scripts/gen-bench-page.mjs parses the committed artifacts
+(scripts/bench-vs-js.results.txt and scripts/bench-browser.results.txt,
+cross-checked against scripts/bench-cases.mjs) and renders every
+data-bearing region of web/index.html and web/benchmarks.html between
+bench:gen marker comments: charts as hand-rolled inline SVG with baked
+numbers (no runtime fetching, no chart library), tables, and the
+number-carrying prose. Its --check mode regenerates in memory and fails CI
+on any byte of drift, so page numbers provably equal the committed
+benchmark output; parsers are strict and fail loudly on format changes.
+This is a generator plus a gate, not a site build step: the pages stay
+committed static files, reviewed like any other code, per the no-bundler
+rule. One exception to byte-comparison: the engine-size figure is baked
+from the locally built web/pkg wasm binary (gitignored, toolchain
+dependent) and --check verifies it against the current build within 10%,
+mirroring the CLAUDE.md size-watch rule.
+Charting discipline: bar charts are linear from a zero baseline; the one
+axis spanning orders of magnitude (time vs input size) is a log-log line
+chart labeled as such on both axes; every chart carries an SVG title and
+desc, values as text (never color-only), and a full data table fallback;
+losses are colored red and labeled "slower" with the same prominence as
+wins, and the identical-input fast path is labeled as not an engine-speed
+number everywhere it appears. The home "Why it's fast" card now shows the
+artifact's measured values (wasm total, call plus assembly, for the example
+snippet and the 150 KB fixture) with generated bar widths and copy; the
+stale M8-era 0.1 ms / 10.1 ms figures are gone. scripts/check-bench-page.mjs
+(Playwright, in CI) asserts the page renders, charts have accessible names
+and table fallbacks, links work, and no request leaves the origin.
+
 ## D8: Worker compute and virtualized rendering (M10, pending Alex ratification)
 Goal (issue #16): a 5 MB and larger input must never hang the tab. Two
 structural changes ship together, both web-layer only; the engine, the M9
