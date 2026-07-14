@@ -135,6 +135,39 @@ depth but no longer load-bearing: set the zone's Browser Cache TTL to
 npm in the workspace and that prunes the smoke's --no-save playwright
 package, so the deploy job reinstalls it after the deploy step (browser
 binaries survive in the runner cache); wrangler is pinned to 3.90.0.
+Follow-up (2026-07-14, M10 deploy, second incident): the post-deploy smoke
+went red on the M10 deploy with the engine dead on the live site, badge
+stuck on "loading engine…" and module scripts rejected for text/html MIME.
+Root cause, established by reading the run logs and probing production
+afterwards: the artifact was complete (all files uploaded; every module
+URL, the worker chain, and the content-hashed wasm verified correct on the
+live site), but the smoke's browser check ran exactly once, 8 seconds
+after "Deployment complete", inside the edge propagation window, when
+Pages still answered the SPA fallback (index.html, status 200, text/html)
+for some newly uploaded module scripts. Visitors in that window got a dead
+engine (the worker module and the main-thread fallback import both failed
+strict MIME checking); the window then healed itself, verified by rerunning
+the smoke and a worker-mode, large-diff, virtualized-scroll probe against
+production. Three failure classes fixed forward, none of them app code:
+(a) masking: web/404.html now ships, so Pages returns a real 404 for a
+missing asset instead of disguising it as the tool page; a genuinely
+missing module can never again look like a 200;
+(b) blind spots: scripts/smoke-live.mjs now walks the module graph from
+index.html (imports, dynamic imports, new URL and new Worker references,
+transitively) and asserts every same-origin script, wasm, and stylesheet
+serves 200 with a sane MIME type, requires the scan to reach the worker
+and wasm files so refactors cannot hide them, and asserts the compute
+worker is actually running after init, because the engine's deliberate
+main-thread fallback (D8) would otherwise let a broken worker URL pass a
+badge-only smoke silently. Remote smokes retry the whole attempt across a
+bounded window so propagation is absorbed rather than trusted or fatal;
+(c) exposure: the deploy job now deploys the stamped artifact to a Pages
+preview branch first, runs the full live smoke against the preview URL,
+and only on green deploys the identical artifact to the production branch.
+Wrangler offers no alias-swap promote for Pages; deploying the same
+content-addressed files twice is equivalent (the second upload deduplicates
+to nothing) and means no deployment reaches the production alias before a
+real browser has passed every check against it on real hosting.
 
 ## D6: Sparse wasm boundary contract v2 (M9, pending Alex ratification)
 Root cause (issue #9): the v1 boundary marshalled the full DiffResult, both

@@ -1,19 +1,42 @@
 #!/usr/bin/env node
 // scripts/smoke-live.mjs: headless smoke test of the diff.wtf shell, run by
-// the deploy pipeline twice: before deploying, against the exact artifact
-// that will ship (--serve <dir>), and after deploying, against the live URL.
-// It exists because the 2026-07-13 M9 deploy broke the live site in a way
-// nothing tested: CI validated one locally built site, the deploy workflow
-// rebuilt and shipped different bytes, and no check ever loaded the deployed
-// page, where returning visitors' four-hour-fresh cached JS glue failed to
-// link against the always-revalidated new wasm (DECISIONS.md D7).
+// the deploy pipeline three times: against the exact stamped artifact that
+// will ship (--serve <dir>), against the Pages preview deployment, and
+// against production after promotion. It exists because two deploys in a
+// row broke the live site in ways nothing tested:
 //
-// Asserts:
-//   1. the engine initializes: the perf badge reaches "ready · engine
+//   2026-07-13 (M9): CI validated one locally built site, the deploy
+//   workflow rebuilt and shipped different bytes, and returning visitors'
+//   cached JS glue failed to link against the new wasm (DECISIONS.md D7).
+//
+//   2026-07-14 (M10): the artifact was complete and correct, but for a
+//   window after "Deployment complete" the Pages edge served the SPA
+//   fallback (index.html, text/html) for newly uploaded module scripts,
+//   so the compute worker and the main-thread fallback both failed strict
+//   MIME checking and the engine never initialized for visitors in that
+//   window. The one-shot post-deploy smoke caught it 8 seconds after the
+//   deploy and correctly went red; nothing before production had loaded
+//   the worker chain over real hosting.
+//
+// Asserts, per attempt:
+//   1. module graph integrity: starting from index.html, every same-origin
+//      script, wasm, and stylesheet the page or its worker loads (imports,
+//      dynamic imports, new URL / new Worker references, followed
+//      transitively) answers 200 with a sane MIME type for its extension.
+//      A missing file disguised as HTML by a hosting fallback dies here,
+//      by URL, instead of as a cryptic MIME console error. The scan must
+//      reach the worker, the wasm glue, and the wasm binary, so a refactor
+//      that hides them from the scan fails loudly too.
+//   2. the engine initializes: the perf badge reaches "ready · engine
 //      loaded" (a glue/wasm version mismatch dies here as a LinkError);
-//   2. a diff actually renders: typed input produces rows and real counts;
-//   3. zero page errors and zero console errors during all of the above;
-//   4. the HTML entry point serves Cache-Control: no-cache (remote targets
+//   3. the compute worker is actually running: the engine falls back to
+//      main-thread compute if the worker cannot start, which keeps old
+//      browsers working but must never mask a broken worker URL in this
+//      Chromium run (the M10 incident would have passed a smoke that only
+//      checked the badge, had the fallback import not also been hit);
+//   4. a diff actually renders: typed input produces rows and real counts;
+//   5. zero page errors and zero console errors during all of the above;
+//   6. the HTML entry point serves Cache-Control: no-cache (remote targets
 //      only). The HTML is the single freshness root: every JS module URL is
 //      stamped per deploy (scripts/stamp-site.mjs) and the wasm URL carries
 //      its content hash (build-wasm.sh), so cached JS and wasm files are
@@ -22,12 +45,14 @@
 //      TTL setting rewrites browser-facing headers on edge-cacheable types
 //      (.js) regardless of the origin's _headers policy; HTML passes
 //      through untouched (verified 2026-07-14, CI run 12 postmortem);
-//   5. with --expect-stamp <stamp>: the served HTML references
+//   7. with --expect-stamp <stamp>: the served HTML references
 //      js/app.js?v=<stamp>, proving the deploy that just ran is what the
 //      target actually serves.
 //
-// Remote fetch checks retry for up to a minute to absorb edge propagation
-// right after a deploy; the browser checks run once after they settle.
+// Remote targets get a bounded retry of the WHOLE attempt (fetch, graph,
+// and browser checks) so edge propagation right after a deploy is absorbed
+// instead of failing a healthy deploy, while a target that never converges
+// inside the window still fails. Local (--serve) targets run once.
 //
 // Usage:
 //   node scripts/smoke-live.mjs https://diff.wtf [--expect-stamp abc12345]
@@ -103,110 +128,210 @@ if (serveDir) {
   process.exit(2);
 }
 
-const failures = [];
-const check = (ok, label, detail = '') => {
-  console.log(`${ok ? 'PASS' : 'FAIL'} ${label}${ok || !detail ? '' : `: ${detail}`}`);
-  if (!ok) failures.push(label);
-};
+// ---------------------------------------------------------------------------
+// Module graph scan
+// ---------------------------------------------------------------------------
 
-// 4 + 5. Plain HTTP checks before the browser run, retried on remote
-// targets so a deploy that is still propagating through the edge gets up to
-// a minute to settle instead of failing the gate spuriously.
-{
-  const attempt = async () => {
-    const out = { ok: true, lines: [] };
+// import ... from '...', import('...'), new URL('...'), new Worker('...').
+const REF_RE = /(?:from\s*|import\s*\(\s*|new\s+(?:URL|Worker)\s*\(\s*)['"]([^'"]+)['"]/g;
+const HTML_REF_RE = /(?:src|href)="([^"]+)"/g;
+const SCAN_EXT = /\.(?:m?js|wasm|css)$/;
+const EXPECT_MIME = [
+  [/\.m?js$/, /javascript/],
+  [/\.wasm$/, /wasm/],
+  [/\.css$/, /css/],
+];
+// The scan is only trustworthy if it still reaches the engine's moving
+// parts; if a refactor renames or hides these, fail the scan itself.
+const MUST_REACH = ['/js/app.js', '/js/worker.js', '/pkg/diffwtf_wasm.js', '/pkg/diffwtf_wasm_bg.wasm'];
+
+async function moduleGraphProblems() {
+  const origin = new URL(`${base}/`).origin;
+  const seen = new Set(); // pathnames already checked
+  const problems = [];
+  const queue = [{ href: `${base}/`, kind: 'html' }];
+  while (queue.length) {
+    const { href, kind } = queue.shift();
+    const pathname = new URL(href).pathname;
+    if (seen.has(pathname)) continue;
+    seen.add(pathname);
+    let res;
+    try {
+      res = await fetch(href, { redirect: 'follow' });
+    } catch (err) {
+      problems.push(`${pathname}: fetch failed (${err})`);
+      continue;
+    }
+    const type = res.headers.get('content-type') ?? '(none)';
+    if (!res.ok) {
+      problems.push(`${pathname}: HTTP ${res.status}`);
+      continue;
+    }
+    const expect = kind === 'html' ? [/./, /html/] : EXPECT_MIME.find(([ext]) => ext.test(pathname));
+    if (expect && !expect[1].test(type)) {
+      problems.push(`${pathname}: served as ${type} (a hosting fallback is likely masking a missing file)`);
+      continue;
+    }
+    if (kind === 'wasm' || kind === 'css') continue;
+    const text = await res.text();
+    const re = kind === 'html' ? HTML_REF_RE : REF_RE;
+    for (const match of text.matchAll(re)) {
+      let ref;
+      try {
+        ref = new URL(match[1], href);
+      } catch {
+        continue;
+      }
+      if (ref.origin !== origin || !SCAN_EXT.test(ref.pathname)) continue;
+      const ext = ref.pathname.match(SCAN_EXT)[0];
+      queue.push({ href: ref.href, kind: ext === '.css' ? 'css' : ext === '.wasm' ? 'wasm' : 'js' });
+    }
+  }
+  for (const path of MUST_REACH) {
+    if (!seen.has(path)) {
+      problems.push(`scan never reached ${path}; the module graph or this scan needs updating`);
+    }
+  }
+  return { problems, scanned: seen.size };
+}
+
+// ---------------------------------------------------------------------------
+// One full attempt: fetch checks, module graph, browser checks
+// ---------------------------------------------------------------------------
+
+async function runAttempt(browser) {
+  const lines = []; // [ok, label, detail]
+  const push = (ok, label, detail = '') => lines.push([ok, label, detail]);
+
+  // 6 + 7. Plain HTTP checks on the entry point.
+  try {
     const res = await fetch(`${base}/`, { redirect: 'follow' });
-    const cc = res.headers.get('cache-control') ?? '(none)';
+    const html = await res.text();
     if (remote) {
-      const ccOk = res.ok && cc.includes('no-cache');
-      out.ok &&= ccOk;
-      out.lines.push([ccOk, 'HTML always revalidates', `HTTP ${res.status}, cache-control: ${cc}`]);
+      const cc = res.headers.get('cache-control') ?? '(none)';
+      push(res.ok && cc.includes('no-cache'), 'HTML always revalidates', `HTTP ${res.status}, cache-control: ${cc}`);
     }
     if (expectStamp) {
-      const html = await res.text();
       const needle = `js/app.js?v=${expectStamp}`;
-      const stampOk = res.ok && html.includes(needle);
-      out.ok &&= stampOk;
-      out.lines.push([stampOk, 'deployed stamp is live', `HTML ${stampOk ? 'references' : 'does not reference'} ${needle}`]);
+      push(res.ok && html.includes(needle), 'deployed stamp is live', `HTML ${html.includes(needle) ? 'references' : 'does not reference'} ${needle}`);
     }
-    return out;
-  };
-  let last = null;
-  const attempts = remote ? 12 : 1;
-  for (let i = 0; i < attempts; i++) {
-    if (i > 0) await new Promise((r) => setTimeout(r, 5000));
-    try {
-      last = await attempt();
-    } catch (err) {
-      last = { ok: false, lines: [[false, 'fetch checks', String(err)]] };
-    }
-    if (last.ok) break;
+  } catch (err) {
+    push(false, 'entry point fetch', String(err));
   }
-  for (const [ok, label, detail] of last?.lines ?? []) check(ok, label, detail);
+
+  // 1. Module graph integrity.
+  const graph = await moduleGraphProblems();
+  push(
+    graph.problems.length === 0,
+    'module graph: every script, wasm, and stylesheet serves with a sane MIME type',
+    graph.problems.length ? graph.problems.slice(0, 4).join(' | ') : `${graph.scanned} files scanned from index.html`,
+  );
+
+  // 2 to 5. Browser checks on a fresh page.
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (err) => errors.push(`pageerror: ${err}`));
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(`console: ${msg.text()}`);
+  });
+  try {
+    await page.goto(`${base}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+    // 2. Engine initializes. A stale-glue LinkError leaves the badge stuck
+    // on "loading engine…" and surfaces in `errors` below.
+    let engineReady = true;
+    try {
+      await page.waitForFunction(
+        () => document.getElementById('perf-text')?.textContent === 'ready · engine loaded',
+        undefined,
+        { timeout: 20000 },
+      );
+    } catch {
+      engineReady = false;
+    }
+    push(
+      engineReady,
+      'engine initializes',
+      `badge reads ${JSON.stringify(await page.textContent('#perf-text'))}`,
+    );
+
+    // 3. The worker must actually be running: the engine's main-thread
+    // fallback exists for browsers without module workers, and this run is
+    // Chromium, so reaching ready without a worker means the worker chain
+    // is broken and was silently papered over.
+    const workerUrls = page.workers().map((w) => w.url());
+    push(
+      engineReady && workerUrls.some((u) => /\/js\/worker\.js/.test(u)),
+      'compute worker is running (not the silent main-thread fallback)',
+      workerUrls.length ? `workers: ${workerUrls.join(', ')}` : 'no workers on the page',
+    );
+
+    // 4. A diff renders end to end. Since M10 the compute runs in the
+    // worker, so the badge updates asynchronously after the input events;
+    // wait for it to leave the ready/computing states before asserting.
+    if (engineReady) {
+      await page.fill('#left-text', 'a\nb\nc');
+      await page.fill('#right-text', 'a\nX\nc');
+      try {
+        await page.waitForFunction(
+          () => /^\d/.test(document.getElementById('perf-text')?.textContent ?? ''),
+          undefined,
+          { timeout: 10000 },
+        );
+      } catch {
+        /* the badge assertion below reports the actual state */
+      }
+      const badge = await page.textContent('#perf-text');
+      const added = await page.textContent('#stat-added');
+      const rows = await page.evaluate(
+        () => document.querySelectorAll('#diff-body .row-split, #diff-body .row-unified').length,
+      );
+      push(
+        /^3 lines · [\d.,<]+ ms$/.test(badge) && added === '+1' && rows === 3,
+        'diff renders',
+        `badge ${JSON.stringify(badge)}, added ${JSON.stringify(added)}, rows ${rows}`,
+      );
+    }
+
+    // 5. No errors anywhere in the attempt.
+    push(errors.length === 0, 'no page or console errors', errors.join(' | ').slice(0, 500));
+  } catch (err) {
+    push(false, 'browser checks', String(err).slice(0, 300));
+  } finally {
+    await page.close();
+  }
+  return lines;
 }
+
+// ---------------------------------------------------------------------------
+// Attempt loop: absorb edge propagation on remote targets, bounded
+// ---------------------------------------------------------------------------
+
+const ATTEMPTS = remote ? 5 : 1;
+const RETRY_DELAY_MS = 15000;
 
 const { chromium } = await loadPlaywright();
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-const errors = [];
-page.on('pageerror', (err) => errors.push(`pageerror: ${err}`));
-page.on('console', (msg) => {
-  if (msg.type() === 'error') errors.push(`console: ${msg.text()}`);
-});
 
+let lines = [];
 try {
-  await page.goto(`${base}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-  // 1. Engine initializes. A stale-glue LinkError leaves the badge stuck on
-  // "loading engine…" and surfaces in `errors` below.
-  let engineReady = true;
-  try {
-    await page.waitForFunction(
-      () => document.getElementById('perf-text')?.textContent === 'ready · engine loaded',
-      undefined,
-      { timeout: 20000 },
-    );
-  } catch {
-    engineReady = false;
-  }
-  check(
-    engineReady,
-    'engine initializes',
-    `badge reads ${JSON.stringify(await page.textContent('#perf-text'))}`,
-  );
-
-  // 2. A diff renders end to end. Since M10 the compute runs in a worker,
-  // so the badge updates asynchronously after the input events; wait for
-  // it to leave the ready/computing states before asserting.
-  if (engineReady) {
-    await page.fill('#left-text', 'a\nb\nc');
-    await page.fill('#right-text', 'a\nX\nc');
-    try {
-      await page.waitForFunction(
-        () => /^\d/.test(document.getElementById('perf-text')?.textContent ?? ''),
-        undefined,
-        { timeout: 10000 },
-      );
-    } catch {
-      /* the badge assertion below reports the actual state */
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    if (attempt > 1) {
+      console.log(`attempt ${attempt - 1} failed; retrying in ${RETRY_DELAY_MS / 1000} s (attempt ${attempt} of ${ATTEMPTS}, absorbing edge propagation)`);
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
     }
-    const badge = await page.textContent('#perf-text');
-    const added = await page.textContent('#stat-added');
-    const rows = await page.evaluate(
-      () => document.querySelectorAll('#diff-body .row-split, #diff-body .row-unified').length,
-    );
-    check(
-      /^3 lines · [\d.,<]+ ms$/.test(badge) && added === '+1' && rows === 3,
-      'diff renders',
-      `badge ${JSON.stringify(badge)}, added ${JSON.stringify(added)}, rows ${rows}`,
-    );
+    lines = await runAttempt(browser);
+    if (lines.every(([ok]) => ok)) break;
   }
-
-  // 3. No errors anywhere in the run.
-  check(errors.length === 0, 'no page or console errors', errors.join(' | ').slice(0, 500));
 } finally {
   await browser.close();
   server?.close();
+}
+
+const failures = [];
+for (const [ok, label, detail] of lines) {
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${label}${detail ? `: ${detail}` : ''}`);
+  if (!ok) failures.push(label);
 }
 
 if (failures.length) {
