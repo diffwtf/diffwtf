@@ -33,6 +33,26 @@ was verified to fail with exit 1 on a reconstruction of the incident's
 mixed-version state. Previously deploy.yml rebuilt the wasm independently
 of CI, so the deployed bytes were never the tested bytes and nothing ever
 loaded the deployed page.
+Follow-up (2026-07-14, first real deploy run): the post-deploy smoke did
+its job and failed the run, exposing two things. First, layer (a) is
+defeated for .js on the production domain: the diff.wtf zone's Browser
+Cache TTL setting rewrites the browser-facing Cache-Control to
+max-age=14400 for edge-cacheable types even on cache misses, while the
+same files on diffwtf.pages.dev serve the intended no-cache (so _headers
+itself is correct). Instead of depending on a dashboard setting, deploys
+now stamp every JS module URL in the artifact with the deploy's commit SHA
+(scripts/stamp-site.mjs, run in the deploy job; repo sources keep a
+constant ?v=m10 fallback and stay static): the always-revalidated HTML is
+the single freshness root, and cached JS or wasm files are harmless
+because their URLs are version-keyed (the wasm by content hash since (b)).
+The smoke now asserts what is load-bearing: HTML no-cache, the deployed
+stamp visible in the served HTML, engine link, render, zero errors, with
+a bounded retry for edge propagation. Recommended to Alex, defense in
+depth but no longer load-bearing: set the zone's Browser Cache TTL to
+"Respect Existing Headers". Second, wrangler-action installs wrangler via
+npm in the workspace and that prunes the smoke's --no-save playwright
+package, so the deploy job reinstalls it after the deploy step (browser
+binaries survive in the runner cache); wrangler is pinned to 3.90.0.
 
 ## D6: Sparse wasm boundary contract v2 (M9, pending Alex ratification)
 Root cause (issue #9): the v1 boundary marshalled the full DiffResult, both

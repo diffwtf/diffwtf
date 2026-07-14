@@ -13,14 +13,25 @@
 //      loaded" (a glue/wasm version mismatch dies here as a LinkError);
 //   2. a diff actually renders: typed input produces rows and real counts;
 //   3. zero page errors and zero console errors during all of the above;
-//   4. remote targets only: the cache policy from web/_headers is live
-//      (Cache-Control includes no-cache on the HTML, the app JS, and the
-//      wasm glue), so the policy that makes mixed-version caches impossible
-//      cannot silently regress.
+//   4. the HTML entry point serves Cache-Control: no-cache (remote targets
+//      only). The HTML is the single freshness root: every JS module URL is
+//      stamped per deploy (scripts/stamp-site.mjs) and the wasm URL carries
+//      its content hash (build-wasm.sh), so cached JS and wasm files are
+//      version-keyed and harmless, but the HTML must always revalidate.
+//      Only the HTML is asserted because the diff.wtf zone's Browser Cache
+//      TTL setting rewrites browser-facing headers on edge-cacheable types
+//      (.js) regardless of the origin's _headers policy; HTML passes
+//      through untouched (verified 2026-07-14, CI run 12 postmortem);
+//   5. with --expect-stamp <stamp>: the served HTML references
+//      js/app.js?v=<stamp>, proving the deploy that just ran is what the
+//      target actually serves.
+//
+// Remote fetch checks retry for up to a minute to absorb edge propagation
+// right after a deploy; the browser checks run once after they settle.
 //
 // Usage:
-//   node scripts/smoke-live.mjs https://diff.wtf
-//   node scripts/smoke-live.mjs --serve web
+//   node scripts/smoke-live.mjs https://diff.wtf [--expect-stamp abc12345]
+//   node scripts/smoke-live.mjs --serve web [--expect-stamp abc12345]
 //
 // Requires Playwright with Chromium. If `import('playwright')` cannot
 // resolve it, set PLAYWRIGHT_BASE to a node_modules directory containing it.
@@ -69,20 +80,27 @@ function serve(root) {
 }
 
 const args = process.argv.slice(2);
+let serveDir = null;
+let expectStamp = null;
+let url = null;
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--serve') serveDir = args[++i];
+  else if (args[i] === '--expect-stamp') expectStamp = args[++i];
+  else url = args[i];
+}
 let server = null;
 let base;
 let remote;
-if (args[0] === '--serve') {
-  if (!args[1]) {
-    console.error('usage: smoke-live.mjs --serve <dir> | smoke-live.mjs <url>');
-    process.exit(2);
-  }
-  server = await serve(args[1]);
+if (serveDir) {
+  server = await serve(serveDir);
   base = `http://127.0.0.1:${server.address().port}`;
   remote = false;
-} else {
-  base = (args[0] ?? 'https://diff.wtf').replace(/\/$/, '');
+} else if (url) {
+  base = url.replace(/\/$/, '');
   remote = true;
+} else {
+  console.error('usage: smoke-live.mjs <url> [--expect-stamp s] | smoke-live.mjs --serve <dir> [--expect-stamp s]');
+  process.exit(2);
 }
 
 const failures = [];
@@ -91,22 +109,40 @@ const check = (ok, label, detail = '') => {
   if (!ok) failures.push(label);
 };
 
-// 4. Cache policy, checked over plain HTTP before the browser run so a
-// policy regression fails even if the page itself happens to work.
-if (remote) {
-  for (const path of ['/', '/js/app.js', '/pkg/diffwtf_wasm.js']) {
-    let detail = '';
-    let ok = false;
-    try {
-      const res = await fetch(base + path, { method: 'GET', redirect: 'follow' });
-      const cc = res.headers.get('cache-control') ?? '(none)';
-      ok = res.ok && cc.includes('no-cache');
-      detail = `HTTP ${res.status}, cache-control: ${cc}`;
-    } catch (err) {
-      detail = String(err);
+// 4 + 5. Plain HTTP checks before the browser run, retried on remote
+// targets so a deploy that is still propagating through the edge gets up to
+// a minute to settle instead of failing the gate spuriously.
+{
+  const attempt = async () => {
+    const out = { ok: true, lines: [] };
+    const res = await fetch(`${base}/`, { redirect: 'follow' });
+    const cc = res.headers.get('cache-control') ?? '(none)';
+    if (remote) {
+      const ccOk = res.ok && cc.includes('no-cache');
+      out.ok &&= ccOk;
+      out.lines.push([ccOk, 'HTML always revalidates', `HTTP ${res.status}, cache-control: ${cc}`]);
     }
-    check(ok, `cache policy on ${path}`, detail);
+    if (expectStamp) {
+      const html = await res.text();
+      const needle = `js/app.js?v=${expectStamp}`;
+      const stampOk = res.ok && html.includes(needle);
+      out.ok &&= stampOk;
+      out.lines.push([stampOk, 'deployed stamp is live', `HTML ${stampOk ? 'references' : 'does not reference'} ${needle}`]);
+    }
+    return out;
+  };
+  let last = null;
+  const attempts = remote ? 12 : 1;
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await new Promise((r) => setTimeout(r, 5000));
+    try {
+      last = await attempt();
+    } catch (err) {
+      last = { ok: false, lines: [[false, 'fetch checks', String(err)]] };
+    }
+    if (last.ok) break;
   }
+  for (const [ok, label, detail] of last?.lines ?? []) check(ok, label, detail);
 }
 
 const { chromium } = await loadPlaywright();

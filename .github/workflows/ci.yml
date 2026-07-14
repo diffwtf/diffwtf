@@ -105,6 +105,16 @@ jobs:
           name: site
           path: site
 
+      # Key every JS module URL in the artifact to this deploy (commit SHA),
+      # so browser-cached JS can never be paired with a different deploy's
+      # files no matter what TTL the zone stamps on .js responses
+      # (scripts/stamp-site.mjs has the postmortem). Rewrites URL query
+      # strings only; the pre-deploy smoke below revalidates the stamped
+      # artifact end to end, and exactly these bytes deploy.
+      - name: Stamp site with the deploy version
+        if: steps.cf.outputs.configured == 'true'
+        run: node scripts/stamp-site.mjs site "${GITHUB_SHA:0:8}"
+
       - name: Install Playwright (pinned)
         if: steps.cf.outputs.configured == 'true'
         run: |
@@ -114,7 +124,7 @@ jobs:
       # Gate: the artifact must pass the same smoke the live site will face.
       - name: Pre-deploy smoke (exact artifact)
         if: steps.cf.outputs.configured == 'true'
-        run: node scripts/smoke-live.mjs --serve site
+        run: node scripts/smoke-live.mjs --serve site --expect-stamp "${GITHUB_SHA:0:8}"
 
       - name: Deploy tested artifact to Cloudflare Pages
         if: steps.cf.outputs.configured == 'true'
@@ -122,11 +132,21 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '3.90.0'
           command: pages deploy site --project-name=diffwtf
 
+      # wrangler-action installs wrangler via npm in the workspace, and that
+      # npm run prunes packages not in a package.json, which removes the
+      # --no-save playwright installed above (this bit CI run 12). The
+      # browser binaries under ~/.cache/ms-playwright survive, so
+      # reinstalling the package is quick.
+      - name: Reinstall Playwright package (wrangler-action prunes node_modules)
+        if: steps.cf.outputs.configured == 'true'
+        run: npm install --no-save --no-package-lock "playwright@${PLAYWRIGHT_VERSION}"
+
       # The check that was missing on 2026-07-13: load the DEPLOYED site and
-      # assert the engine links, a diff renders, no errors, and the cache
-      # policy from web/_headers is actually being served.
+      # assert the engine links, a diff renders, no errors, the HTML entry
+      # point always revalidates, and this exact deploy's stamp is live.
       - name: Post-deploy smoke (live URL)
         if: steps.cf.outputs.configured == 'true'
-        run: node scripts/smoke-live.mjs https://diff.wtf
+        run: node scripts/smoke-live.mjs https://diff.wtf --expect-stamp "${GITHUB_SHA:0:8}"

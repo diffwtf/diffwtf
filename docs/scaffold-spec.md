@@ -392,10 +392,13 @@ it comfortably under ~100 KB for an engine this size. Size is marketing here.
   `node scripts/conformance-web.mjs` against the built wasm. Cache cargo.
 - **deploy** (a job in ci.yml since the D7 hotfix; the old standalone deploy.yml rebuilt the
   wasm independently of the tested build and is gone): on pushes to main, the ci job uploads
-  the built `web/` as an artifact; the deploy job downloads that exact artifact, smoke-tests
-  it headlessly (`scripts/smoke-live.mjs --serve`), deploys it to **Cloudflare Pages**
-  (project `diffwtf`), then smoke-tests the live URL, which also asserts the `web/_headers`
-  cache policy is being served. Toolchain versions are pinned in the workflow env block.
+  the built `web/` as an artifact; the deploy job downloads that exact artifact, stamps every
+  JS module URL with the deploy's commit SHA (`scripts/stamp-site.mjs`, see D7: the zone
+  rewrites .js cache headers, so freshness is URL-keyed instead of header-dependent),
+  smoke-tests the stamped artifact headlessly (`scripts/smoke-live.mjs --serve`), deploys it
+  to **Cloudflare Pages** (project `diffwtf`), then smoke-tests the live URL, asserting the
+  engine links, a diff renders, the HTML revalidates, and the deploy's stamp is live.
+  Toolchain versions are pinned in the workflow env block.
 - **publish.yml** (tag `core-v*`): `cargo publish -p diffwtf-core`. Requires `CARGO_REGISTRY_TOKEN`
   secret. Manual workflow_dispatch is fine for v1 instead of tag automation.
 
