@@ -8,7 +8,13 @@
 // Rendering safety rule (CLAUDE.md): user and diff text enters the DOM only
 // through textContent or text nodes, never through markup parsing.
 
-import init, { compute } from '../pkg/diffwtf_wasm.js';
+// The ?v=m10 query is a one-time cache bust: pre-hotfix deploys served this
+// file and the glue with four hours of browser freshness (Cloudflare Pages'
+// .js default), so returning visitors could pair a stale glue with a fresh
+// wasm module, which fails to link (DECISIONS.md D7). Fresh staleness is
+// prevented by web/_headers; this constant only has to rescue caches filled
+// before that policy existed, so it never needs to change again.
+import init, { compute } from '../pkg/diffwtf_wasm.js?v=m10';
 import { assembleDiffResult } from './assemble.js';
 import { renderSplit, renderUnified } from './render.js';
 import { sampleA, sampleB } from './samples.js';

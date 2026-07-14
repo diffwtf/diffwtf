@@ -48,13 +48,14 @@ diffwtf/
 │   ├── js/assemble.js          # rebuilds renderable rows from the sparse v2 result (M9)
 │   ├── js/render.js            # DOM builders for the split/unified views (M9)
 │   ├── og-card.png             # rendered from the design's OG card (1200×630)
+│   ├── _headers                # Cloudflare Pages cache policy: no-cache on everything (D7)
 │   └── pkg/                    # wasm-pack output — GITIGNORED, built by CI/local script
 ├── scripts/
 │   ├── build-wasm.sh           # wasm-pack build crates/diffwtf-wasm --target web --out-dir ../../web/pkg --release
 │   └── gen-fixtures.mjs        # runs reference/refdiff.mjs over fixtures/cases → fixtures/expected
 └── .github/workflows/
-    ├── ci.yml                  # fmt + clippy + cargo test + wasm build on every push/PR
-    ├── deploy.yml              # build wasm, deploy web/ (host TBD: Cloudflare Pages or GitHub Pages)
+    ├── ci.yml                  # gates + wasm build on every push/PR; on main pushes the same
+    │                           #   tested artifact deploys to Cloudflare Pages with smoke tests (D7)
     └── publish.yml             # cargo publish -p diffwtf-core on version tags (manual approval fine)
 ```
 
@@ -389,9 +390,12 @@ it comfortably under ~100 KB for an engine this size. Size is marketing here.
 - **ci.yml** (push + PR): `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test
 --workspace`, then `wasm-pack build` to prove the wasm target compiles, then
   `node scripts/conformance-web.mjs` against the built wasm. Cache cargo.
-- **deploy.yml** (push to main, once host is chosen): build wasm into `web/pkg`, deploy `web/`.
-  Host preference: **Cloudflare Pages** (diff.wtf domain is easy to attach, correct
-  `application/wasm` MIME, free); GitHub Pages is an acceptable fallback.
+- **deploy** (a job in ci.yml since the D7 hotfix; the old standalone deploy.yml rebuilt the
+  wasm independently of the tested build and is gone): on pushes to main, the ci job uploads
+  the built `web/` as an artifact; the deploy job downloads that exact artifact, smoke-tests
+  it headlessly (`scripts/smoke-live.mjs --serve`), deploys it to **Cloudflare Pages**
+  (project `diffwtf`), then smoke-tests the live URL, which also asserts the `web/_headers`
+  cache policy is being served. Toolchain versions are pinned in the workflow env block.
 - **publish.yml** (tag `core-v*`): `cargo publish -p diffwtf-core`. Requires `CARGO_REGISTRY_TOKEN`
   secret. Manual workflow_dispatch is fine for v1 instead of tag automation.
 
