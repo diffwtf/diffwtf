@@ -1,6 +1,6 @@
 # DECISIONS
 
-## D9: Benchmarks page and single-source performance numbers (M11, pending Alex ratification)
+## D9: Benchmarks page and single-source performance numbers (M11, ratified by Alex 2026-07-14)
 Goal (issue #11): the site's speed numbers must be mechanically tied to the
 committed benchmark artifacts so they can never silently go stale again.
 Route: web/benchmarks.html, linked from the home nav ("Benchmarks") and from
@@ -203,7 +203,7 @@ content-addressed files twice is equivalent (the second upload deduplicates
 to nothing) and means no deployment reaches the production alias before a
 real browser has passed every check against it on real hosting.
 
-## D6: Sparse wasm boundary contract v2 (M9, pending Alex ratification)
+## D6: Sparse wasm boundary contract v2 (M9, ratified by Alex 2026-07-14)
 Root cause (issue #9): the v1 boundary marshalled the full DiffResult, both
 views including every Equal row, through serde-wasm-bindgen one JS object at
 a time, so transfer cost scaled with document size and the end-to-end wasm
