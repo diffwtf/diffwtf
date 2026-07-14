@@ -138,27 +138,65 @@ jobs:
         if: steps.cf.outputs.configured == 'true'
         run: node scripts/smoke-live.mjs --serve site --expect-stamp "${GITHUB_SHA:0:8}"
 
-      - name: Deploy tested artifact to Cloudflare Pages
+      # Preview-first promotion (2026-07-14 M10 incident follow-up): the
+      # artifact deploys to a Pages PREVIEW branch, the full live smoke runs
+      # against that preview URL over real hosting (module MIME types, the
+      # worker chain, edge behavior), and only if it passes does the same
+      # content-addressed artifact deploy to the production branch. Wrangler
+      # has no alias-swap promote for Pages, but deploying identical files
+      # twice is equivalent: uploads are deduplicated by content hash, so
+      # the production deploy re-uploads nothing and just repoints the
+      # production alias at bytes the preview already proved live.
+      - name: Deploy tested artifact to Cloudflare Pages (preview)
+        if: steps.cf.outputs.configured == 'true'
+        id: preview
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '3.90.0'
+          command: pages deploy site --project-name=diffwtf --branch=preview --commit-dirty=true
+
+      # wrangler-action installs wrangler via npm in the workspace, and that
+      # npm run prunes packages not in a package.json, which removes the
+      # --no-save playwright installed above (this bit CI run 12). The
+      # browser binaries under ~/.cache/ms-playwright survive, so
+      # reinstalling the package is quick. Needed after every wrangler step.
+      - name: Reinstall Playwright package (wrangler-action prunes node_modules)
+        if: steps.cf.outputs.configured == 'true'
+        run: npm install --no-save --no-package-lock "playwright@${PLAYWRIGHT_VERSION}"
+
+      # The gate the M10 incident proved necessary: the first time a real
+      # browser loads this deploy over real Pages hosting happens BEFORE
+      # anything reaches the production alias.
+      - name: Preview smoke (gate before promotion)
+        if: steps.cf.outputs.configured == 'true'
+        run: |
+          PREVIEW_URL="${{ steps.preview.outputs.deployment-url }}"
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "::error::wrangler-action returned no deployment-url for the preview deploy"
+            exit 1
+          fi
+          node scripts/smoke-live.mjs "$PREVIEW_URL" --expect-stamp "${GITHUB_SHA:0:8}"
+
+      - name: Promote to production (same artifact, production branch)
         if: steps.cf.outputs.configured == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: '3.90.0'
-          command: pages deploy site --project-name=diffwtf
+          command: pages deploy site --project-name=diffwtf --branch=main --commit-dirty=true
 
-      # wrangler-action installs wrangler via npm in the workspace, and that
-      # npm run prunes packages not in a package.json, which removes the
-      # --no-save playwright installed above (this bit CI run 12). The
-      # browser binaries under ~/.cache/ms-playwright survive, so
-      # reinstalling the package is quick.
-      - name: Reinstall Playwright package (wrangler-action prunes node_modules)
+      - name: Reinstall Playwright package (again, after the production wrangler step)
         if: steps.cf.outputs.configured == 'true'
         run: npm install --no-save --no-package-lock "playwright@${PLAYWRIGHT_VERSION}"
 
       # The check that was missing on 2026-07-13: load the DEPLOYED site and
-      # assert the engine links, a diff renders, no errors, the HTML entry
-      # point always revalidates, and this exact deploy's stamp is live.
+      # assert the module graph, the engine and its worker, a rendered diff,
+      # no errors, the HTML cache policy, and this exact deploy's stamp. The
+      # smoke retries through the edge propagation window (the 2026-07-14
+      # failure mode) before declaring the deploy dead.
       - name: Post-deploy smoke (live URL)
         if: steps.cf.outputs.configured == 'true'
         run: node scripts/smoke-live.mjs https://diff.wtf --expect-stamp "${GITHUB_SHA:0:8}"
