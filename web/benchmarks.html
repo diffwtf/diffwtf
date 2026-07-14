@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmarks · diff.wtf</title>
+<meta name="description" content="Real, reproducible benchmarks for the diff.wtf engine: wins, losses, and methodology, all generated from committed benchmark output.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://diff.wtf/benchmarks.html">
+<meta property="og:title" content="Benchmarks · diff.wtf">
+<meta property="og:description" content="Real, reproducible benchmarks: wins, losses, and methodology, generated from committed benchmark output.">
+<meta property="og:image" content="https://diff.wtf/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Benchmarks · diff.wtf">
+<meta name="twitter:description" content="Real, reproducible benchmarks: wins, losses, and methodology, generated from committed benchmark output.">
+<meta name="twitter:image" content="https://diff.wtf/og-card.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body class="bench">
+
+<header class="site-header">
+  <a class="wordmark" href="./">diff<span class="accent">.wtf</span></a>
+  <a class="back-link" href="./">← back to the tool</a>
+</header>
+
+<main class="bench-main">
+  <h1>Benchmarks</h1>
+<!-- bench:gen bench-meta -->
+  <p class="bench-updated">committed run: node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 6353c28 · <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a></p>
+<!-- bench:endgen bench-meta -->
+  <p>Every number and chart on this page is generated from the committed output of a reproducible benchmark, run on the same engine build the site ships. That includes the cases where this engine loses; they are labeled exactly like the wins. The comparison baseline throughout is the repo's own JS reference implementation, a faithful stand-in for a pure-JS diff tool with this feature set, running in the same process. A checked-in script regenerates this page from the benchmark artifacts, and CI fails if the two ever diverge, so a number you read here cannot silently go stale.</p>
+
+  <h2>How it scales</h2>
+<!-- bench:gen bench-scaling -->
+  <p>The size-scaling family is the same content shape at growing sizes: line-based text with a bounded zone of edits, the shape diff tools see most. Per case, the chart shows the median of the JS reference total against the wasm pipeline total (compute call plus full view assembly, the js-comparable number). The wasm pipeline overtakes the JS reference between tiny-snippet (360 chars, 0.73x) and small-10kb (10,389 chars, 1.48x), so the crossover sits just under 10 KB: below it the JS reference is the faster tool for this shape, above it the wasm total stays at or ahead of the reference on every case in the family, from 1.01x (large-1mb-sparse, near parity) to 7.51x (mid-40kb). The ratio is content-dependent, not size-monotonic; the full matrix below has the exceptions.</p>
+  <div class="bench-card">
+    <svg class="bench-svg" viewBox="0 0 720 380" role="img" aria-labelledby="scaling-title scaling-desc">
+    <title id="scaling-title">Median diff time by input size: JS reference vs wasm pipeline</title>
+    <desc id="scaling-desc">Line chart with logarithmic axes over the 8 size-scaling cases, from tiny-snippet (360 characters) to huge-13mb-sparse (12,901,554 characters). The wasm pipeline overtakes the JS reference between 360 and 10,389 characters. Exact values are in the table below the chart.</desc>
+    <line x1="84" y1="266.4" x2="684" y2="266.4" stroke="#161c24"/>
+    <text x="76" y="270.4" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="end">0.1</text>
+    <line x1="84" y1="199.1" x2="684" y2="199.1" stroke="#161c24"/>
+    <text x="76" y="203.1" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="end">1</text>
+    <line x1="84" y1="131.7" x2="684" y2="131.7" stroke="#161c24"/>
+    <text x="76" y="135.7" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="end">10</text>
+    <line x1="84" y1="64.3" x2="684" y2="64.3" stroke="#161c24"/>
+    <text x="76" y="68.3" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="end">100</text>
+    <line x1="157.0" y1="30" x2="157.0" y2="306" stroke="#161c24"/>
+    <text x="157.0" y="324" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">1k</text>
+    <line x1="280.8" y1="30" x2="280.8" y2="306" stroke="#161c24"/>
+    <text x="280.8" y="324" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">10k</text>
+    <line x1="404.6" y1="30" x2="404.6" y2="306" stroke="#161c24"/>
+    <text x="404.6" y="324" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">100k</text>
+    <line x1="528.4" y1="30" x2="528.4" y2="306" stroke="#161c24"/>
+    <text x="528.4" y="324" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">1M</text>
+    <line x1="652.2" y1="30" x2="652.2" y2="306" stroke="#161c24"/>
+    <text x="652.2" y="324" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">10M</text>
+    <rect x="102.1" y="30" width="180.8" height="276" fill="#3fd68f" fill-opacity="0.07"/>
+    <text x="192.5" y="294" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="middle">crossover</text>
+    <line x1="84" y1="306" x2="684" y2="306" stroke="#1a212b"/>
+    <line x1="84" y1="30" x2="84" y2="306" stroke="#1a212b"/>
+    <text x="384" y="350" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="middle">input size, characters per side (log scale)</text>
+    <text x="24" y="168" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="middle" transform="rotate(-90 24 168)">median time, ms (log scale)</text>
+    <polyline points="102.1,290.5 282.9,244.6 356.8,164.7 427.4,147.7 466.4,148.7 530.5,131.2 617.7,69.7 665.9,45.5" fill="none" stroke="#8b98a9" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <polyline points="102.1,280.9 282.9,256.0 356.8,223.6 427.4,187.0 466.4,167.1 530.5,131.7 617.7,80.0 665.9,52.5" fill="none" stroke="#3fd68f" stroke-width="2"/>
+    <circle cx="102.1" cy="290.5" r="3.5" fill="#8b98a9"><title>tiny-snippet: JS reference 0.044 ms</title></circle>
+    <circle cx="282.9" cy="244.6" r="3.5" fill="#8b98a9"><title>small-10kb: JS reference 0.211 ms</title></circle>
+    <circle cx="356.8" cy="164.7" r="3.5" fill="#8b98a9"><title>mid-40kb: JS reference 3.24 ms</title></circle>
+    <circle cx="427.4" cy="147.7" r="3.5" fill="#8b98a9"><title>large-150kb-sparse: JS reference 5.78 ms</title></circle>
+    <circle cx="466.4" cy="148.7" r="3.5" fill="#8b98a9"><title>lines-10k: JS reference 5.59 ms</title></circle>
+    <circle cx="530.5" cy="131.2" r="3.5" fill="#8b98a9"><title>large-1mb-sparse: JS reference 10.15 ms</title></circle>
+    <circle cx="617.7" cy="69.7" r="3.5" fill="#8b98a9"><title>huge-5mb-sparse: JS reference 82.99 ms</title></circle>
+    <circle cx="665.9" cy="45.5" r="3.5" fill="#8b98a9"><title>huge-13mb-sparse: JS reference 189.87 ms</title></circle>
+    <rect x="98.6" y="277.4" width="7" height="7" fill="#3fd68f"><title>tiny-snippet: wasm pipeline 0.061 ms</title></rect>
+    <rect x="279.4" y="252.5" width="7" height="7" fill="#3fd68f"><title>small-10kb: wasm pipeline 0.143 ms</title></rect>
+    <rect x="353.3" y="220.1" width="7" height="7" fill="#3fd68f"><title>mid-40kb: wasm pipeline 0.432 ms</title></rect>
+    <rect x="423.9" y="183.5" width="7" height="7" fill="#3fd68f"><title>large-150kb-sparse: wasm pipeline 1.51 ms</title></rect>
+    <rect x="462.9" y="163.6" width="7" height="7" fill="#3fd68f"><title>lines-10k: wasm pipeline 2.98 ms</title></rect>
+    <rect x="527.0" y="128.2" width="7" height="7" fill="#3fd68f"><title>large-1mb-sparse: wasm pipeline 10.00 ms</title></rect>
+    <rect x="614.2" y="76.5" width="7" height="7" fill="#3fd68f"><title>huge-5mb-sparse: wasm pipeline 58.51 ms</title></rect>
+    <rect x="662.4" y="49.0" width="7" height="7" fill="#3fd68f"><title>huge-13mb-sparse: wasm pipeline 149.85 ms</title></rect>
+    <line x1="98" y1="40" x2="124" y2="40" stroke="#3fd68f" stroke-width="2"/>
+    <rect x="107.5" y="36.5" width="7" height="7" fill="#3fd68f"/>
+    <text x="132" y="44" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start" font-weight="700">wasm pipeline (compute + view assembly)</text>
+    <line x1="98" y1="60" x2="124" y2="60" stroke="#8b98a9" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <circle cx="111" cy="60" r="3.5" fill="#8b98a9"/>
+    <text x="132" y="64" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="start" font-weight="700">JS reference (refdiff.mjs)</text>
+  </svg>
+  </div>
+  <div class="bench-scroll">
+    <table class="bench-table" id="scaling-table">
+      <caption>Size-scaling cases: medians per pipeline (data for the chart above)</caption>
+      <thead><tr><th scope="col">case</th><th scope="col">what it is</th><th scope="col">input, chars</th><th scope="col">runs</th><th scope="col">JS reference</th><th scope="col">wasm (call + assembly)</th><th scope="col">wasm (M10 page path)</th><th scope="col">ratio</th></tr></thead>
+      <tbody>
+      <tr><td>tiny-snippet</td><td>the &quot;Load example&quot; pair every visitor sees (343 + 360 chars)</td><td class="r">343 + 360</td><td class="r">50</td><td class="r">0.044 ms</td><td class="r">0.061 ms</td><td class="r">0.052 ms</td><td class="r">0.73x</td></tr>
+      <tr><td>small-10kb</td><td>330 lines / ~10 KB, 12 edited lines in one zone</td><td class="r">10,350 + 10,389</td><td class="r">50</td><td class="r">0.211 ms</td><td class="r">0.143 ms</td><td class="r">0.113 ms</td><td class="r">1.48x</td></tr>
+      <tr><td>mid-40kb</td><td>1,300 lines / ~40 KB, 22 edited lines in one zone</td><td class="r">40,982 + 41,070</td><td class="r">50</td><td class="r">3.24 ms</td><td class="r">0.432 ms</td><td class="r">0.351 ms</td><td class="r">7.51x</td></tr>
+      <tr><td>large-150kb-sparse</td><td>5,000 lines / 150 KB, 44 edited lines (the committed marketing fixture)</td><td class="r">152,579 + 152,846</td><td class="r">50</td><td class="r">5.78 ms</td><td class="r">1.51 ms</td><td class="r">1.21 ms</td><td class="r">3.83x</td></tr>
+      <tr><td>lines-10k</td><td>10,000 lines / ~310 KB, 60 edited lines in one zone</td><td class="r">315,272 + 315,633</td><td class="r">50</td><td class="r">5.59 ms</td><td class="r">2.98 ms</td><td class="r">2.43 ms</td><td class="r">1.87x</td></tr>
+      <tr><td>large-1mb-sparse</td><td>33,000 lines / ~1 MB, 72 edited lines in one zone</td><td class="r">1,038,890 + 1,039,396</td><td class="r">25</td><td class="r">10.15 ms</td><td class="r">10.00 ms</td><td class="r">7.95 ms</td><td class="r">1.01x</td></tr>
+      <tr><td>huge-5mb-sparse</td><td>165,000 lines / ~5.4 MB, 89 edited lines in one zone (the M10 large-file target)</td><td class="r">5,263,685 + 5,264,324</td><td class="r">7</td><td class="r">82.99 ms</td><td class="r">58.51 ms</td><td class="r">40.57 ms</td><td class="r">1.42x</td></tr>
+      <tr><td>huge-13mb-sparse</td><td>400,000 lines / ~13 MB, 97 edited lines in one zone</td><td class="r">12,900,754 + 12,901,554</td><td class="r">5</td><td class="r">189.87 ms</td><td class="r">149.85 ms</td><td class="r">96.57 ms</td><td class="r">1.27x</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="bench-note">The M10 page path column is what the live site actually does per keystroke since M10: compute call plus lazy row model plus one 60-row render window; the virtualized page never materializes every row. It is shown for honesty about what you experience on the site, but the headline ratio deliberately uses the full-assembly total, where both sides do the same work.</p>
+<!-- bench:endgen bench-scaling -->
+
+  <h2>Where it loses</h2>
+<!-- bench:gen bench-losses -->
+  <p>The same benchmark run contains every case where the wasm pipeline is not the right tool, measured with the identical methodology as the wins:</p>
+  <ul>
+    <li><strong>Tiny inputs.</strong> On the &quot;Load example&quot; pair every visitor sees (343 + 360 chars), the JS reference wins: 0.044 ms against 0.061 ms for the wasm pipeline (0.73x). Below the crossover the wasm boundary floor costs more than the diff itself.</li>
+    <li><strong>Complete rewrites.</strong> The complete-rewrite case is 3,000 vs 3,000 lines with nothing in common: both engines take their documented degradation path (reference LCS bailout, engine depth cap) and emit the same del-all/ins-all diff. The wasm side is slower: 20.95 ms against 6.50 ms (0.31x, about a third of the JS speed). Tracked openly as <a href="https://github.com/diffwtf/diffwtf/issues/12">issue #12</a>.</li>
+    <li><strong>Identical inputs.</strong> The large-150kb-identical case (0.61x) measures a disclosed product shortcut, not engine speed: since M9 the engine short-circuits byte-identical inputs to a single Equal run. It is in the matrix because hiding a below-1x number would be spin; it must not be read as an engine measurement in either direction.</li>
+    <li><strong>Once the DOM dominates.</strong> In a real Chromium tab, rendering every row of a large diff into the DOM costs far more than computing it, so end to end the two pipelines finish within 1.00x to 1.02x of each other on the browser-measured cases (identical fast path aside). The browser section below shows this in full; since M10 the site renders a virtualized window instead of every row, which is what keeps large diffs responsive.</li>
+  </ul>
+<!-- bench:endgen bench-losses -->
+
+  <h2>Every case</h2>
+<!-- bench:gen bench-ratios -->
+  <div class="bench-card">
+    <svg class="bench-svg" viewBox="0 0 720 437" role="img" aria-labelledby="ratios-title ratios-desc">
+    <title id="ratios-title">Speed ratio per benchmark case, JS reference time divided by wasm time</title>
+    <desc id="ratios-desc">Bar chart of all 13 cases on a linear scale from a zero baseline with the 1x parity line marked. Bars left of 1x are cases where the wasm pipeline is slower. Exact values are in the table below the chart.</desc>
+    <line x1="236.0" y1="26" x2="236.0" y2="385" stroke="#161c24"/>
+    <text x="236.0" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">0x</text>
+    <line x1="280.3" y1="26" x2="280.3" y2="385" stroke="#161c24"/>
+    <text x="280.3" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">1x</text>
+    <line x1="324.5" y1="26" x2="324.5" y2="385" stroke="#161c24"/>
+    <text x="324.5" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">2x</text>
+    <line x1="368.8" y1="26" x2="368.8" y2="385" stroke="#161c24"/>
+    <text x="368.8" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">3x</text>
+    <line x1="413.0" y1="26" x2="413.0" y2="385" stroke="#161c24"/>
+    <text x="413.0" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">4x</text>
+    <line x1="457.3" y1="26" x2="457.3" y2="385" stroke="#161c24"/>
+    <text x="457.3" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">5x</text>
+    <line x1="501.5" y1="26" x2="501.5" y2="385" stroke="#161c24"/>
+    <text x="501.5" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">6x</text>
+    <line x1="545.8" y1="26" x2="545.8" y2="385" stroke="#161c24"/>
+    <text x="545.8" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">7x</text>
+    <line x1="590.0" y1="26" x2="590.0" y2="385" stroke="#161c24"/>
+    <text x="590.0" y="401" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">8x</text>
+    <line x1="280.3" y1="26" x2="280.3" y2="385" stroke="#8b98a9" stroke-dasharray="3 3"/>
+    <text x="280.3" y="20" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="middle">1x = same speed as the JS reference</text>
+    <text x="226" y="46" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">tiny-snippet</text>
+    <rect x="236" y="37" width="32.3" height="12" rx="3" fill="#f85149"/>
+    <text x="276.3" y="47" font-family="JetBrains Mono, monospace" font-size="11" fill="#f85149" text-anchor="start">0.73x (slower)</text>
+    <text x="226" y="73" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">small-10kb</text>
+    <rect x="236" y="64" width="65.5" height="12" rx="3" fill="#3fd68f"/>
+    <text x="309.5" y="74" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">1.48x</text>
+    <text x="226" y="100" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">mid-40kb</text>
+    <rect x="236" y="91" width="332.3" height="12" rx="3" fill="#3fd68f"/>
+    <text x="576.3" y="101" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">7.51x</text>
+    <text x="226" y="127" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">large-150kb-sparse</text>
+    <rect x="236" y="118" width="169.5" height="12" rx="3" fill="#3fd68f"/>
+    <text x="413.5" y="128" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">3.83x</text>
+    <text x="226" y="154" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">large-150kb-identical</text>
+    <rect x="236" y="145" width="27.0" height="12" rx="3" fill="#f85149"/>
+    <text x="271" y="155" font-family="JetBrains Mono, monospace" font-size="11" fill="#f85149" text-anchor="start">0.61x (fast path, not engine speed)</text>
+    <text x="226" y="181" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">lines-10k</text>
+    <rect x="236" y="172" width="82.7" height="12" rx="3" fill="#3fd68f"/>
+    <text x="326.7" y="182" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">1.87x</text>
+    <text x="226" y="208" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">large-1mb-sparse</text>
+    <rect x="236" y="199" width="44.7" height="12" rx="3" fill="#3fd68f"/>
+    <text x="288.7" y="209" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">1.01x</text>
+    <text x="226" y="235" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">huge-5mb-sparse</text>
+    <rect x="236" y="226" width="62.8" height="12" rx="3" fill="#3fd68f"/>
+    <text x="306.8" y="236" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">1.42x</text>
+    <text x="226" y="262" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">huge-13mb-sparse</text>
+    <rect x="236" y="253" width="56.2" height="12" rx="3" fill="#3fd68f"/>
+    <text x="300.2" y="263" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">1.27x</text>
+    <text x="226" y="289" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">large-1mb-spread</text>
+    <rect x="236" y="280" width="273.0" height="12" rx="3" fill="#3fd68f"/>
+    <text x="517" y="290" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">6.17x</text>
+    <text x="226" y="316" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">complete-rewrite</text>
+    <rect x="236" y="307" width="13.7" height="12" rx="3" fill="#f85149"/>
+    <text x="257.7" y="317" font-family="JetBrains Mono, monospace" font-size="11" fill="#f85149" text-anchor="start">0.31x (slower)</text>
+    <text x="226" y="343" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">adversarial-repeats</text>
+    <rect x="236" y="334" width="96.9" height="12" rx="3" fill="#3fd68f"/>
+    <text x="340.9" y="344" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">2.19x</text>
+    <text x="226" y="370" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">minified-json</text>
+    <rect x="236" y="361" width="105.3" height="12" rx="3" fill="#3fd68f"/>
+    <text x="349.3" y="371" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">2.38x</text>
+    <text x="413" y="423" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="middle">JS reference time / wasm time (linear, zero baseline; above 1x, wasm is faster)</text>
+  </svg>
+  </div>
+  <div class="bench-scroll">
+    <table class="bench-table" id="ratios-table">
+      <caption>All cases: medians per pipeline (data for the chart above)</caption>
+      <thead><tr><th scope="col">case</th><th scope="col">what it is</th><th scope="col">input, chars</th><th scope="col">runs</th><th scope="col">JS reference</th><th scope="col">wasm (call + assembly)</th><th scope="col">wasm (M10 page path)</th><th scope="col">ratio</th></tr></thead>
+      <tbody>
+      <tr><td>tiny-snippet</td><td>the &quot;Load example&quot; pair every visitor sees (343 + 360 chars)</td><td class="r">343 + 360</td><td class="r">50</td><td class="r">0.044 ms</td><td class="r">0.061 ms</td><td class="r">0.052 ms</td><td class="r">0.73x</td></tr>
+      <tr><td>small-10kb</td><td>330 lines / ~10 KB, 12 edited lines in one zone</td><td class="r">10,350 + 10,389</td><td class="r">50</td><td class="r">0.211 ms</td><td class="r">0.143 ms</td><td class="r">0.113 ms</td><td class="r">1.48x</td></tr>
+      <tr><td>mid-40kb</td><td>1,300 lines / ~40 KB, 22 edited lines in one zone</td><td class="r">40,982 + 41,070</td><td class="r">50</td><td class="r">3.24 ms</td><td class="r">0.432 ms</td><td class="r">0.351 ms</td><td class="r">7.51x</td></tr>
+      <tr><td>large-150kb-sparse</td><td>5,000 lines / 150 KB, 44 edited lines (the committed marketing fixture)</td><td class="r">152,579 + 152,846</td><td class="r">50</td><td class="r">5.78 ms</td><td class="r">1.51 ms</td><td class="r">1.21 ms</td><td class="r">3.83x</td></tr>
+      <tr><td>large-150kb-identical</td><td>150 KB, byte-identical sides: measures the identical-input fast path plus boundary floor, NOT engine speed</td><td class="r">152,579 + 152,579</td><td class="r">50</td><td class="r">0.679 ms</td><td class="r">1.11 ms</td><td class="r">0.902 ms</td><td class="r">0.61x</td></tr>
+      <tr><td>lines-10k</td><td>10,000 lines / ~310 KB, 60 edited lines in one zone</td><td class="r">315,272 + 315,633</td><td class="r">50</td><td class="r">5.59 ms</td><td class="r">2.98 ms</td><td class="r">2.43 ms</td><td class="r">1.87x</td></tr>
+      <tr><td>large-1mb-sparse</td><td>33,000 lines / ~1 MB, 72 edited lines in one zone</td><td class="r">1,038,890 + 1,039,396</td><td class="r">25</td><td class="r">10.15 ms</td><td class="r">10.00 ms</td><td class="r">7.95 ms</td><td class="r">1.01x</td></tr>
+      <tr><td>huge-5mb-sparse</td><td>165,000 lines / ~5.4 MB, 89 edited lines in one zone (the M10 large-file target)</td><td class="r">5,263,685 + 5,264,324</td><td class="r">7</td><td class="r">82.99 ms</td><td class="r">58.51 ms</td><td class="r">40.57 ms</td><td class="r">1.42x</td></tr>
+      <tr><td>huge-13mb-sparse</td><td>400,000 lines / ~13 MB, 97 edited lines in one zone</td><td class="r">12,900,754 + 12,901,554</td><td class="r">5</td><td class="r">189.87 ms</td><td class="r">149.85 ms</td><td class="r">96.57 ms</td><td class="r">1.27x</td></tr>
+      <tr><td>large-1mb-spread</td><td>33,000 lines / ~1 MB, ~110 edits spread across the whole file: past the reference LCS bailout, so the reference degrades to a full rewrite while the engine stays minimal; output quality differs and added/removed counts are reported per side</td><td class="r">1,040,315 + 1,040,931</td><td class="r">25</td><td class="r">69.17 ms</td><td class="r">11.21 ms</td><td class="r">8.30 ms</td><td class="r">6.17x</td></tr>
+      <tr><td>complete-rewrite</td><td>3,000 vs 3,000 lines with nothing in common: both engines take their documented degradation path (reference LCS bailout, engine depth cap) and emit the same del-all/ins-all diff</td><td class="r">94,757 + 94,365</td><td class="r">25</td><td class="r">6.50 ms</td><td class="r">20.95 ms</td><td class="r">17.84 ms</td><td class="r">0.31x</td></tr>
+      <tr><td>adversarial-repeats</td><td>700 lines per side drawn from a 12-line pool, independently shuffled: maximal ambiguity; both engines produce minimal diffs that may differ in shape but must agree on counts</td><td class="r">21,607 + 21,553</td><td class="r">50</td><td class="r">7.01 ms</td><td class="r">3.19 ms</td><td class="r">2.99 ms</td><td class="r">2.19x</td></tr>
+      <tr><td>minified-json</td><td>single-line minified JSON, ~150 KB per side, one value edited mid-string: exercises intra-line refinement with prefix/suffix trimming on one huge line</td><td class="r">145,124 + 145,145</td><td class="r">50</td><td class="r">8.58 ms</td><td class="r">3.60 ms</td><td class="r">3.59 ms</td><td class="r">2.38x</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="bench-note">Counts note: on large-1mb-spread the two pipelines legitimately disagree on output, js +32701/-32701 vs wasm +110/-110 (documented divergence: reference degrades past its bailout). Its ratio compares different amounts of useful work and favors the engine, which stays minimal where the reference degrades. The large-150kb-identical bar measures the disclosed identical-input fast path plus the boundary floor, not engine speed.</p>
+<!-- bench:endgen bench-ratios -->
+
+  <h2>Where the time goes</h2>
+<!-- bench:gen bench-phases -->
+  <p>Phases of the wasm pipeline on large-150kb-sparse: 5,000 lines / 150 KB, 44 edited lines (the committed marketing fixture). The result marshal is the cost of crossing the wasm boundary, the part M9 rewrote: with the sparse contract it is 0.026 ms here, measured as the difference between the compute call and a probe call that does the same work but returns only a checksum.</p>
+  <div class="bench-card">
+    <svg class="bench-svg" viewBox="0 0 720 230" role="img" aria-labelledby="phases-title phases-desc">
+    <title id="phases-title">Where the time goes on the 150 KB fixture</title>
+    <desc id="phases-desc">Bar chart of the wasm pipeline phases for the large-150kb-sparse case on a linear scale from a zero baseline, with the JS reference total as context. The boundary marshal is 0.026 ms. Exact values are in the table below the chart.</desc>
+    <line x1="280.0" y1="16" x2="280.0" y2="178" stroke="#161c24"/>
+    <text x="280.0" y="194" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">0</text>
+    <line x1="334.9" y1="16" x2="334.9" y2="178" stroke="#161c24"/>
+    <text x="334.9" y="194" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">1</text>
+    <line x1="389.8" y1="16" x2="389.8" y2="178" stroke="#161c24"/>
+    <text x="389.8" y="194" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">2</text>
+    <line x1="444.7" y1="16" x2="444.7" y2="178" stroke="#161c24"/>
+    <text x="444.7" y="194" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">3</text>
+    <line x1="499.6" y1="16" x2="499.6" y2="178" stroke="#161c24"/>
+    <text x="499.6" y="194" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">4</text>
+    <line x1="554.5" y1="16" x2="554.5" y2="178" stroke="#161c24"/>
+    <text x="554.5" y="194" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="middle">5</text>
+    <text x="270" y="28" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">JS reference total, for context</text>
+    <rect x="280" y="19" width="317.3" height="12" rx="3" fill="#8b98a9"/>
+    <text x="605.3" y="29" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="start">5.78 ms</text>
+    <text x="270" y="55" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">wasm engine compute (probe)</text>
+    <rect x="280" y="46" width="55.4" height="12" rx="3" fill="#3fd68f"/>
+    <text x="343.4" y="56" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">1.01 ms</text>
+    <text x="270" y="82" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">result marshal across the boundary</text>
+    <rect x="280" y="73" width="1.4" height="12" rx="3" fill="#3fd68f"/>
+    <text x="289.4" y="83" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">0.026 ms</text>
+    <text x="270" y="109" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">full view assembly (pre-M10 page path)</text>
+    <rect x="280" y="100" width="25.6" height="12" rx="3" fill="#3fd68f"/>
+    <text x="313.6" y="110" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">0.466 ms</text>
+    <text x="270" y="136" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">row model build (M10 page path)</text>
+    <rect x="280" y="127" width="9.6" height="12" rx="3" fill="#3fd68f"/>
+    <text x="297.6" y="137" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">0.175 ms</text>
+    <text x="270" y="163" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="end">one 60-row render window (M10)</text>
+    <rect x="280" y="154" width="1.0" height="12" rx="3" fill="#3fd68f"/>
+    <text x="289" y="164" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">0.003 ms</text>
+    <text x="445" y="216" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="middle">median time, ms (linear, zero baseline)</text>
+  </svg>
+  </div>
+  <div class="bench-scroll">
+    <table class="bench-table" id="phases-table">
+      <caption>Phase medians on large-150kb-sparse (data for the chart above)</caption>
+      <thead><tr><th scope="col">phase</th><th scope="col">median</th></tr></thead>
+      <tbody>
+      <tr><td>JS reference total (compute incl. views), for context</td><td class="r">5.78 ms</td></tr>
+      <tr><td>wasm engine compute (probe)</td><td class="r">1.01 ms</td></tr>
+      <tr><td>wasm compute call (engine + boundary)</td><td class="r">1.03 ms</td></tr>
+      <tr><td>result marshal across the boundary (derived)</td><td class="r">0.026 ms</td></tr>
+      <tr><td>full view assembly in JS (pre-M10 page path)</td><td class="r">0.466 ms</td></tr>
+      <tr><td>row model build (M10 page path)</td><td class="r">0.175 ms</td></tr>
+      <tr><td>one 60-row render window (M10)</td><td class="r">0.003 ms</td></tr>
+      <tr><td>wasm total (call + full assembly)</td><td class="r">1.51 ms</td></tr>
+      <tr><td>wasm total (M10 page path)</td><td class="r">1.21 ms</td></tr>
+      </tbody>
+    </table>
+  </div>
+<!-- bench:endgen bench-phases -->
+
+  <h2>In a real browser tab</h2>
+<!-- bench:gen bench-browser -->
+  <p>The Node numbers above compare compute. A browser tab also has to render the result, and painting every row of a large diff into the DOM dwarfs either compute path. Measured in headless Chromium on the real page (node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit c00db09, <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-browser.results.txt">scripts/bench-browser.results.txt</a>): on the 150 KB fixture the shared split-view DOM render is 239.00 ms, so despite a 4.25x compute win the end-to-end ratio including render is 1.02x. Stated plainly: once the full DOM render dominates, the engines tie. That is why M10 made the site render a virtualized window instead of every row.</p>
+  <div class="bench-card">
+    <svg class="bench-svg" viewBox="0 0 720 180" role="img" aria-labelledby="browser-title browser-desc">
+    <title id="browser-title">Compute plus DOM render on the 150 KB fixture in Chromium</title>
+    <desc id="browser-desc">Two stacked bars on a linear scale from a zero baseline. Rendering the split view into the DOM takes 239.00 ms for both pipelines, so end to end the two finish within about 1.02x of each other despite the 4.25x compute gap. Exact values are in the table below.</desc>
+    <text x="20" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#8b98a9" text-anchor="start">JS reference: compute 6.80 ms + DOM render 239.00 ms = 245.80 ms</text>
+    <rect x="20" y="34" width="17.9" height="14" fill="#8b98a9"/>
+    <rect x="37.9" y="34" width="629.2" height="14" fill="#3a4657"/>
+    <text x="20" y="84" font-family="JetBrains Mono, monospace" font-size="11" fill="#3fd68f" text-anchor="start">wasm pipeline: compute 1.60 ms + DOM render 239.00 ms = 240.60 ms</text>
+    <rect x="20" y="92" width="4.2" height="14" fill="#3fd68f"/>
+    <rect x="24.2" y="92" width="629.2" height="14" fill="#3a4657"/>
+    <text x="20" y="164" font-family="JetBrains Mono, monospace" font-size="11" fill="#46515f" text-anchor="start">ms, linear, zero baseline; the gray span is the shared DOM render of the split view</text>
+  </svg>
+  </div>
+  <div class="bench-scroll">
+    <table class="bench-table" id="browser-table">
+      <caption>Headless Chromium, real page: medians per case</caption>
+      <thead><tr><th scope="col">case</th><th scope="col">input, chars</th><th scope="col">runs</th><th scope="col">JS reference</th><th scope="col">wasm (call + assembly)</th><th scope="col">DOM render (shared)</th><th scope="col">ratio w/o render</th><th scope="col">ratio incl. render</th></tr></thead>
+      <tbody>
+      <tr><td>tiny-snippet</td><td class="r">343 + 360</td><td class="r">30 (render: 30)</td><td class="r">0.100 ms</td><td class="r">0.100 ms</td><td class="r">1.20 ms</td><td class="r">1.00x</td><td class="r">1.00x</td></tr>
+      <tr><td>large-150kb-sparse</td><td class="r">152,579 + 152,846</td><td class="r">30 (render: 10)</td><td class="r">6.80 ms</td><td class="r">1.60 ms</td><td class="r">239.00 ms</td><td class="r">4.25x</td><td class="r">1.02x</td></tr>
+      <tr><td>large-150kb-identical</td><td class="r">152,579 + 152,579</td><td class="r">30 (render: 10)</td><td class="r">0.600 ms</td><td class="r">1.10 ms</td><td class="r">205.30 ms</td><td class="r">0.55x</td><td class="r">1.00x</td></tr>
+      <tr><td>lines-10k</td><td class="r">315,272 + 315,633</td><td class="r">20 (render: 5)</td><td class="r">5.95 ms</td><td class="r">2.40 ms</td><td class="r">429.80 ms</td><td class="r">2.48x</td><td class="r">1.01x</td></tr>
+      <tr><td>large-1mb-sparse</td><td class="r">1,038,890 + 1,039,396</td><td class="r">10 (render: 2)</td><td class="r">8.90 ms</td><td class="r">7.00 ms</td><td class="r">1754.20 ms</td><td class="r">1.27x</td><td class="r">1.00x</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="bench-note">The large-150kb-identical row measures the disclosed identical-input fast path plus the boundary floor, not engine speed.</p>
+<!-- bench:endgen bench-browser -->
+
+  <h2>Engine size</h2>
+<!-- bench:gen bench-size -->
+  <p>The engine ships as a <span id="wasm-size" data-bytes="45673">45.7 KB</span> WebAssembly binary (measured from the built <code>web/pkg/diffwtf_wasm_bg.wasm</code>), plus a few KB of JS glue. The whole site is a handful of static files: no framework, no bundler, no server round trips.</p>
+<!-- bench:endgen bench-size -->
+
+  <h2>Methodology</h2>
+<!-- bench:gen bench-methodology -->
+  <p>Every number on this page is parsed out of the committed benchmark artifacts by <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/gen-bench-page.mjs">scripts/gen-bench-page.mjs</a>, which regenerates this page and the home page chart; CI fails if the pages and the artifacts diverge. Nothing here is hand-typed.</p>
+  <p>Main run (<a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a>): node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 6353c28. Reported values are medians, 10 warmup runs per pipeline (huge cases override per bench-cases.mjs), word granularity, interleaved. Both pipelines run in the same Node process (V8, the engine Chrome uses) on byte-identical modules to what the site ships; the browser table above repeats the core cases in headless Chromium to confirm the relative numbers carry over. Inputs are committed fixtures or deterministic seeded generators (<a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-cases.mjs">scripts/bench-cases.mjs</a>), reproducible from any checkout; the per-case descriptions in the tables above are the generators' own notes. Sanity checks run before timing: both pipelines must agree on added and removed counts (except the disclosed large-1mb-spread divergence), and assembled output must reconstruct both inputs byte for byte.</p>
+  <p>Fairness notes, disclosed: the sparse-edit generators keep edits inside a bounded zone so both engines produce the identical minimal diff (same work, same output); the spread and rewrite cases deliberately step outside that and are labeled with what changes. The identical-input fast path is a product shortcut and never backs an engine-speed claim. The Node runner is not a browser page; the browser run exists to check that the story holds there.</p>
+  <p>Reproduce it: <code>./scripts/build-wasm.sh</code> then <code>node scripts/bench-vs-js.mjs</code> (and <code>node scripts/bench-browser.mjs</code> for the Chromium run), from <a href="https://github.com/diffwtf/diffwtf">the repo</a>. The committed results files are regenerated by piping stdout there and committing the diff, so the artifact history is reviewable like any other code.</p>
+<!-- bench:endgen bench-methodology -->
+</main>
+
+<footer class="privacy-footer">© 2026 diff.wtf · MIT-licensed engine</footer>
+
+</body>
+</html>
