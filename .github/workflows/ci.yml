@@ -73,6 +73,11 @@ jobs:
           npm install --no-save --no-package-lock "playwright@${PLAYWRIGHT_VERSION}"
           npx playwright install --with-deps chromium
 
+      # M12 gate: every fixture through both dispatch transports, plus the
+      # worker-N then sync-N+1 stale-result ordering case.
+      - name: Hybrid dispatch conformance (direct + worker)
+        run: node scripts/conformance-dispatch.mjs --serve web
+
       # M10 gate: worker responsiveness, virtualized scroll correctness,
       # virtualized-vs-full render parity, and copy across recycled rows
       # (scripts/check-virtual.mjs, issue #16), against the same build the
