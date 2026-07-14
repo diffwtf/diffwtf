@@ -1,5 +1,44 @@
 # DECISIONS
 
+## D10: Hybrid synchronous and worker compute dispatch (M12, pending Alex ratification)
+Goal: remove the several-millisecond worker round trip from tiny diffs while
+keeping work that could noticeably block the main thread in the M10 worker.
+All production callers still use one promise-based engine.diff() entry point;
+the dispatcher alone chooses the transport from the combined UTF-8 byte size
+of the two inputs. Both routes load the same wasm-bindgen glue and wasm binary
+and call the same compute(left, right, granularity) export. The result carries
+the transport only as display metadata: "engine" for direct compute and "incl
+worker" for worker compute. Those exact timing-label strings are an
+interpretation call for Alex to ratify or edit.
+
+SYNC_THRESHOLD_BYTES = 56,100, the exact largest measured candidate under the
+8 ms main-thread budget rather than a rounded value. The committed real-
+Chromium benchmark (scripts/bench-dispatch-threshold.mjs and its .results.txt
+artifact) uses deterministic complete rewrites, 10 warmups, and medians of 50
+runs per granularity. At 56,100 combined bytes, wasm compute including
+sparse-result marshal measured 7.20 ms for Word and 7.75 ms for Character;
+the next candidate, 57,750 bytes, measured 7.50 ms and 8.30 ms. The slower
+granularity sets the threshold because routing itself is granularity-
+agnostic. The budget excludes row-model/full-view assembly because M9 places
+that work on the main thread after the sparse typed arrays return in both
+routes; the
+benchmark reports it separately for information. Accepting a threshold below
+the original 100 KB surprise bound, and choosing the exact measured bound,
+are Alex-authorized interpretation calls. The 150 KB home-card fixture routes
+through the worker; no site copy changes as part of M12.
+
+Ordering is global across transports. Every request gets an increasing id and
+updates newestId before dispatch. A worker result is delivered only if its id
+is still newest; therefore, if worker request N finishes after direct request
+N+1 has rendered, N resolves null and cannot overwrite it. Worker requests
+remain coalesced to one in flight and one newest waiter. app.js retains its
+independent sequence check as a second guard. Treating this id rule as the
+cross-transport ordering guarantee is an interpretation call. Browser
+conformance forces every fixture through both transports and asserts exact
+identical views, then explicitly tests the worker-N/direct-N+1 race; the
+forceRoute dependency injection exists only for this test surface and does
+not alter production routing.
+
 ## D9: Benchmarks page and single-source performance numbers (M11, ratified by Alex 2026-07-14)
 Goal (issue #11): the site's speed numbers must be mechanically tied to the
 committed benchmark artifacts so they can never silently go stale again.

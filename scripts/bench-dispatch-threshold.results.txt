@@ -1,0 +1,17 @@
+# diff.wtf M12 sync-dispatch threshold benchmark
+# node v24.18.0 · Chromium · AMD Ryzen 9 5900X 12-Core Processor · commit 2830ba0
+# deterministic complete rewrites; 10 warmups; medians of 50 runs per granularity
+# budget column is wasm compute() including sparse-result marshal; row model and full assembly run on the main thread in both routes and are informational
+
+49,500 combined bytes (750 lines/side): word 5.70 ms · char 6.30 ms · row model 0.00 ms · full assembly 0.30 ms
+52,800 combined bytes (800 lines/side): word 6.40 ms · char 6.95 ms · row model 0.00 ms · full assembly 0.30 ms
+56,100 combined bytes (850 lines/side): word 7.20 ms · char 7.75 ms · row model 0.00 ms · full assembly 0.30 ms
+57,750 combined bytes (875 lines/side): word 7.50 ms · char 8.30 ms · row model 0.00 ms · full assembly 0.30 ms
+59,400 combined bytes (900 lines/side): word 7.95 ms · char 8.60 ms · row model 0.00 ms · full assembly 0.30 ms
+61,050 combined bytes (925 lines/side): word 8.30 ms · char 9.10 ms · row model 0.00 ms · full assembly 0.30 ms
+62,700 combined bytes (950 lines/side): word 8.80 ms · char 9.50 ms · row model 0.00 ms · full assembly 0.40 ms
+66,000 combined bytes (1000 lines/side): word 9.80 ms · char 10.50 ms · row model 0.00 ms · full assembly 0.40 ms
+99,000 combined bytes (1500 lines/side): word 11.80 ms · char 13.00 ms · row model 0.10 ms · full assembly 0.50 ms
+198,000 combined bytes (3000 lines/side): word 14.30 ms · char 16.60 ms · row model 0.10 ms · full assembly 1.10 ms
+
+# largest measured candidate under 8 ms in both granularities: 56,100 combined bytes (word 7.20 ms, char 7.75 ms)

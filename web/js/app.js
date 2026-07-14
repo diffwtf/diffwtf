@@ -1,11 +1,10 @@
 // diff.wtf shell: state, event wiring, timing, and rendering. Behavior
 // follows docs/design-handoff/README.md (Interactions section); the engine
 // contract is docs/scaffold-spec.md. Since M9 the engine returns the sparse
-// v2 result (run-length ops plus highlight ranges); since M10 the wasm call
-// runs in a dedicated Web Worker (engine.js/worker.js), rowmodel.js gives
-// lazy access to the renderable rows, and virtual.js windows the DOM so
-// only the rows near the viewport exist, whatever the input size. The main
-// thread never runs the diff synchronously.
+// v2 result (run-length ops plus highlight ranges); since M12 engine.js
+// dispatches small inputs directly and large inputs through the M10 worker.
+// rowmodel.js gives lazy access to renderable rows, and virtual.js windows
+// the DOM so only rows near the viewport exist, whatever the input size.
 //
 // Rendering safety rule (CLAUDE.md): user and diff text enters the DOM only
 // through textContent or text nodes, never through markup parsing.
@@ -83,12 +82,11 @@ const engine = createEngine();
 let engineReady = false;
 let model = null; // lazy row model over the last sparse result (rowmodel.js)
 let virtualList = null;
-// performance.now() from posting the diff to the worker until the sparse
-// reply is received AND the row model over it is built: the honest
-// input-to-renderable cost the perf badge promises (renderable rows exist
-// exactly when the model does; the windowed DOM render is what the old
-// badge also excluded).
+// performance.now() around the dispatcher promise: direct route setup and
+// compute, or worker postMessage through sparse reply. Shared row-model and
+// windowed DOM work are outside this transport timing on both routes.
 let computedMs = 0;
+let computedTimingLabel = 'engine';
 let requestSeq = 0;
 let loadingTimer = 0;
 
@@ -200,7 +198,7 @@ function render() {
     ? 'loading engine…'
     : empty
       ? 'ready · engine loaded'
-      : `${model.line_count} lines · ${formatMs(computedMs)} ms`;
+      : `${model.line_count} lines · ${formatMs(computedMs)} ms · ${computedTimingLabel}`;
   if (virtualList) {
     virtualList.destroy();
     virtualList = null;
@@ -217,11 +215,11 @@ function render() {
   });
 }
 
-// Live diff on every input, no debounce: the worker computes off the main
-// thread and engine.js coalesces bursts, so typing stays smooth at any
-// size. The Split/Unified toggle re-renders the last result without
-// calling the engine; Word/Character recomputes. Requests carry a
-// sequence number so a stale reply can never overwrite a newer render.
+// Live diff on every input, no debounce: engine.js runs small work directly
+// and coalesces worker work, while large diffs stay off the main thread. The
+// Split/Unified toggle re-renders the last result without calling the engine;
+// Word/Character recomputes. Requests carry a sequence number so a stale
+// reply can never overwrite a newer render.
 function recompute() {
   if (!engineReady) return;
   syncSizeNotice();
@@ -240,10 +238,11 @@ function recompute() {
     }, LOADING_BADGE_DELAY_MS);
   }
   engine.diff(state.left, state.right, state.gran).then(
-    (sparse) => {
-      if (seq !== requestSeq || sparse === null) return; // superseded
-      model = createRowModel(state.left, state.right, sparse);
+    (result) => {
+      if (seq !== requestSeq || result === null) return; // superseded
       computedMs = performance.now() - t0;
+      model = createRowModel(state.left, state.right, result.sparse);
+      computedTimingLabel = result.timingLabel;
       clearLoadingBadge();
       render();
     },

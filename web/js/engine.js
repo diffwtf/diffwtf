@@ -1,87 +1,105 @@
-// diff.wtf engine client (M10): the main thread's only way to run a diff.
-// It spawns the dedicated compute worker (web/js/worker.js) and talks its
-// {type, id, payload} protocol, so the diff path never makes a synchronous
-// wasm call on the main thread.
-//
-// Request discipline:
-//
-//   Correlation   every diff() call gets an increasing id; a reply is only
-//                 delivered while its id is still the newest request, so a
-//                 newer diff supersedes a stale one (superseded calls
-//                 resolve null and their results are dropped, never
-//                 rendered).
-//   Coalescing    at most one request is in flight in the worker; while
-//                 one runs, only the latest waiting request is kept.
-//                 Typing into a large file therefore queues at most one
-//                 follow-up diff instead of a keystroke-deep backlog.
-//
-// Fallback: if module workers are unavailable or the worker dies before
-// signalling ready, the client loads the same wasm module on the main
-// thread and computes there (the pre-M10 path). That keeps old browsers
-// working at the cost of blocking during compute; the request discipline
-// and every caller-visible behavior stay identical.
+// diff.wtf hybrid engine client (M12): every caller uses the same promise-
+// based diff() entry point. Small inputs call the wasm module directly;
+// larger inputs use the dedicated worker. The transport is returned only as
+// a timing label, never selected by the caller.
 
-export function createEngine() {
-  let mode = 'starting'; // 'starting' | 'worker' | 'inline' | 'failed'
-  let worker = null;
+// Complete-rewrite benchmark in scripts/bench-dispatch-threshold.results.txt:
+// 56,100 combined UTF-8 bytes measured 7.75 ms at the slower Character
+// granularity for compute() (engine plus sparse-result marshal), while 57,750
+// bytes measured 8.30 ms. Assembly is excluded because both routes build the
+// row model/views on the main thread after receiving the same sparse arrays.
+// The exact largest measured input under 8 ms is used rather than rounding.
+export const SYNC_THRESHOLD_BYTES = 56_100;
+
+const encoder = new TextEncoder();
+
+function combinedBytes(left, right) {
+  // UTF-8 is never shorter than UTF-16 code-unit count. Reject large inputs
+  // without encoding them, so routing never scans more than the sync budget
+  // on the main thread; only threshold candidates pay TextEncoder's exact
+  // byte count (needed for non-ASCII input).
+  if (left.length + right.length > SYNC_THRESHOLD_BYTES) return SYNC_THRESHOLD_BYTES + 1;
+  return encoder.encode(left).byteLength + encoder.encode(right).byteLength;
+}
+
+export function createEngine({ forceRoute = null, onWorkerProgress = null } = {}) {
   let inlineCompute = null;
-
-  let nextId = 1;
-  let inFlight = null; // {id, resolve, reject}
-  let waiting = null; // {id, left, right, granularity, resolve, reject}
-
-  let readyResolve;
-  const ready = new Promise((resolve) => {
-    readyResolve = resolve;
+  let failed = false;
+  let worker = null;
+  let workerReady = false;
+  let workerUnavailable = false;
+  let workerFailed = false;
+  let workerReadyResolve;
+  const workerReadyPromise = new Promise((resolve) => {
+    workerReadyResolve = resolve;
   });
 
-  function pump() {
-    if (!waiting || inFlight) return;
-    if (mode === 'inline' && !inlineCompute) return; // fallback still loading; ready resolution pumps again
+  let nextId = 1;
+  let newestId = 0;
+  let inFlight = null;
+  let waiting = null;
+
+  const inlineReady = import('../pkg/diffwtf_wasm.js?v=m10').then(async (glue) => {
+    await glue.default();
+    inlineCompute = glue.compute;
+    return true;
+  }).catch((err) => {
+    failed = true;
+    console.error('diff.wtf: wasm engine failed to load', err);
+    return false;
+  });
+
+  function pumpWorker() {
+    if (!waiting || inFlight || !workerReady) return;
     const req = waiting;
     waiting = null;
-    if (mode === 'worker') {
-      inFlight = { id: req.id, resolve: req.resolve, reject: req.reject };
-      worker.postMessage({
-        type: 'diff',
-        id: req.id,
-        payload: { left: req.left, right: req.right, granularity: req.granularity },
-      });
-    } else if (mode === 'inline') {
-      try {
-        req.resolve(inlineCompute(req.left, req.right, req.granularity));
-      } catch (err) {
-        req.reject(err);
-      }
-    }
+    inFlight = req;
+    worker.postMessage({
+      type: 'diff',
+      id: req.id,
+      payload: { left: req.left, right: req.right, granularity: req.granularity },
+    });
   }
 
-  function settleInFlight(deliver) {
+  function settleWorker(deliver) {
     const req = inFlight;
     inFlight = null;
     deliver(req);
-    pump();
+    pumpWorker();
   }
 
-  async function fallbackToInline(reason) {
-    if (mode !== 'starting') return;
-    mode = 'inline';
+  function loseWorker(reason, allowFallback = !workerReady) {
+    if (workerUnavailable) return;
+    workerFailed = !allowFallback;
+    workerUnavailable = true;
+    workerReady = false;
+    if (worker) worker.terminate();
+    worker = null;
+    workerReadyResolve(true); // direct fallback is ready when inlineReady is
     console.warn('diff.wtf: compute worker unavailable, falling back to main-thread compute:', reason);
-    try {
-      const glue = await import('../pkg/diffwtf_wasm.js?v=m10');
-      await glue.default();
-      inlineCompute = glue.compute;
-      readyResolve(true);
-      pump();
-    } catch (err) {
-      mode = 'failed';
-      readyResolve(false);
-      for (const req of [inFlight, waiting]) {
-        if (req) req.reject(err instanceof Error ? err : new Error(String(err)));
+    const queued = [inFlight, waiting];
+    inFlight = null;
+    waiting = null;
+    if (!allowFallback) {
+      for (const req of queued) {
+        if (req) req.reject(new Error(reason));
       }
-      inFlight = null;
-      waiting = null;
+      return;
     }
+    inlineReady.then((ok) => {
+      for (const req of queued) {
+        if (!req) continue;
+        if (!ok) req.reject(new Error('diff engine failed to load'));
+        else if (req.id !== newestId) req.resolve(null);
+        else {
+          try {
+            req.resolve({ sparse: inlineCompute(req.left, req.right, req.granularity), timingLabel: 'engine' });
+          } catch (err) {
+            req.reject(err);
+          }
+        }
+      }
+    });
   }
 
   try {
@@ -90,68 +108,72 @@ export function createEngine() {
       name: 'diffwtf-engine',
     });
   } catch (err) {
-    worker = null;
-    fallbackToInline(String(err));
+    loseWorker(String(err));
   }
 
   if (worker) {
     worker.onmessage = (event) => {
       const { type, id, payload } = event.data;
       if (type === 'ready') {
-        mode = 'worker';
-        readyResolve(true);
-        pump();
+        workerReady = true;
+        workerReadyResolve(true);
+        pumpWorker();
         return;
       }
       if (type === 'error' && id === 0) {
-        // Init failed inside the worker (for example the wasm fetch): the
-        // inline path would fail the same way, so report failure instead
-        // of falling back into a second doomed load.
-        if (mode === 'starting') {
-          mode = 'failed';
-          readyResolve(false);
-        }
-        if (inFlight) settleInFlight((req) => req.reject(new Error(payload.message)));
+        // The worker loaded but its wasm init failed. The direct path loads
+        // the same bytes and is not a meaningful fallback for this failure.
+        loseWorker(payload.message, false);
         return;
       }
-      if (type === 'progress') return; // the page keeps its own loading state
+      if (type === 'progress') {
+        if (onWorkerProgress) onWorkerProgress(id);
+        return;
+      }
       if (type !== 'result' && type !== 'error') return;
-      if (!inFlight || id !== inFlight.id) return; // stale reply, already superseded
-      if (waiting) {
-        // A newer request is queued: this result is stale by definition.
-        settleInFlight((req) => req.resolve(null));
+      if (!inFlight || id !== inFlight.id) return;
+      if (id !== newestId || waiting) {
+        settleWorker((req) => req.resolve(null));
       } else if (type === 'result') {
-        settleInFlight((req) => req.resolve(payload));
+        settleWorker((req) => req.resolve({ sparse: payload, timingLabel: 'incl worker' }));
       } else {
-        settleInFlight((req) => req.reject(new Error(payload.message)));
+        settleWorker((req) => req.reject(new Error(payload.message)));
       }
     };
     worker.onerror = (event) => {
-      // Before ready this fires when the browser cannot run the module
-      // worker at all (for example no module-worker support): fall back.
-      // After ready it is an uncaught worker exception: fail the request.
-      if (mode === 'starting') {
-        event.preventDefault();
-        worker.terminate();
-        worker = null;
-        fallbackToInline(event.message || 'worker error');
-      } else if (inFlight) {
-        settleInFlight((req) => req.reject(new Error(event.message || 'worker error')));
-      }
+      event.preventDefault();
+      loseWorker(event.message || 'worker error');
     };
   }
 
+  async function runInline(req) {
+    if (!(await inlineReady) || failed) throw new Error('diff engine failed to load');
+    if (req.id !== newestId) return null;
+    const sparse = inlineCompute(req.left, req.right, req.granularity);
+    return req.id === newestId ? { sparse, timingLabel: 'engine' } : null;
+  }
+
   function diff(left, right, granularity) {
-    return new Promise((resolve, reject) => {
-      if (mode === 'failed') {
-        reject(new Error('diff engine failed to load'));
-        return;
+    const id = nextId++;
+    newestId = id;
+    const route = forceRoute ?? (combinedBytes(left, right) <= SYNC_THRESHOLD_BYTES ? 'sync' : 'worker');
+    if (route === 'worker' && workerFailed) {
+      return Promise.reject(new Error('compute worker failed'));
+    }
+    if (route === 'sync' || workerUnavailable) {
+      if (waiting) {
+        waiting.resolve(null);
+        waiting = null;
       }
-      if (waiting) waiting.resolve(null); // superseded before it ever ran
-      waiting = { id: nextId++, left, right, granularity, resolve, reject };
-      pump();
+      return runInline({ id, left, right, granularity });
+    }
+    return new Promise((resolve, reject) => {
+      if (waiting) waiting.resolve(null);
+      waiting = { id, left, right, granularity, resolve, reject };
+      pumpWorker();
     });
   }
 
+  const ready = Promise.all([inlineReady, workerReadyPromise]).then(([inlineOk]) => inlineOk);
   return { ready, diff };
 }

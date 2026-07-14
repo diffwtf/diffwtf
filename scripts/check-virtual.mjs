@@ -99,12 +99,12 @@ page.on('request', (req) => {
   if (!sameOrigin && !fonts) offOrigin.push(req.url());
 });
 
-// Waits for the perf badge to show a fresh "<lines> lines · <ms> ms".
+// Waits for the perf badge to show a fresh routed timing.
 async function awaitDiffBadge(previous, timeout = 120000) {
   await page.waitForFunction(
     (prev) => {
       const text = document.getElementById('perf-text')?.textContent ?? '';
-      return text !== prev && /^\d+ lines · [\d.,<]+ ms$/.test(text);
+      return text !== prev && /^\d+ lines · [\d.,<]+ ms · (engine|incl worker)$/.test(text);
     },
     previous,
     { timeout },
@@ -119,6 +119,44 @@ try {
     undefined,
     { timeout: 30000 },
   );
+
+  // ---- 0. hybrid route labels and small-input timing ---------------------
+  {
+    const before = await page.textContent('#perf-text');
+    await page.click('#btn-example');
+    const smallBadge = await awaitDiffBadge(before);
+    const smallMs = smallBadge.includes('<0.1')
+      ? 0.1
+      : Number(smallBadge.match(/· ([\d.]+) ms/)[1]);
+    check(
+      smallBadge.endsWith('· engine') && smallMs < 1,
+      'small input uses the direct engine route with sub-millisecond-scale timing',
+      JSON.stringify(smallBadge),
+    );
+    await page.click('#btn-clear');
+  }
+
+  {
+    const before = await page.textContent('#perf-text');
+    const left = await readFile('fixtures/cases/large-perf.left.txt', 'utf8');
+    const right = await readFile('fixtures/cases/large-perf.right.txt', 'utf8');
+    await page.evaluate(({ left, right }) => {
+      const set = (id, value) => {
+        const el = document.getElementById(id);
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      set('left-text', left);
+      set('right-text', right);
+    }, { left, right });
+    const largeBadge = await awaitDiffBadge(before);
+    check(
+      largeBadge.endsWith('· incl worker'),
+      'committed 150 KB fixture displays the worker timing label',
+      JSON.stringify(largeBadge),
+    );
+    await page.click('#btn-clear');
+  }
 
   // ---- 1. responsiveness during a large worker compute -------------------
   // Every line has its first and last word edited, which defeats the
@@ -191,7 +229,7 @@ try {
       const badge = await new Promise((resolve) => {
         const look = () => {
           const text = perf.textContent;
-          if (text !== before && /^\d+ lines · [\d.,<]+ ms$/.test(text)) resolve(text);
+          if (text !== before && /^\d+ lines · [\d.,<]+ ms · (engine|incl worker)$/.test(text)) resolve(text);
           else setTimeout(look, 25);
         };
         look();
@@ -274,6 +312,7 @@ try {
       '5 MB diff computes and reports its size',
       `badge ${JSON.stringify(badge)}, ${meta.bytes.toLocaleString('en-US')} chars per side`,
     );
+    check(badge.endsWith('· incl worker'), '5 MB diff uses the worker route', JSON.stringify(badge));
 
     const targets = [0, 12345, 100000, meta.count - 1];
     const scroll = await page.evaluate(async (targets) => {

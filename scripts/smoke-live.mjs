@@ -287,7 +287,7 @@ async function runAttempt(browser) {
         () => document.querySelectorAll('#diff-body .row-split, #diff-body .row-unified').length,
       );
       push(
-        /^3 lines · [\d.,<]+ ms$/.test(badge) && added === '+1' && rows === 3,
+        /^3 lines · [\d.,<]+ ms · engine$/.test(badge) && added === '+1' && rows === 3,
         'diff renders',
         `badge ${JSON.stringify(badge)}, added ${JSON.stringify(added)}, rows ${rows}`,
       );

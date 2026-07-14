@@ -47,8 +47,8 @@ const REWRITES = [
     ],
   },
   {
-    // The engine client spawns the worker and holds the main-thread
-    // fallback import; both URLs must be deploy-keyed like static imports.
+    // The engine client spawns the worker and imports the direct-path wasm;
+    // both URLs must be deploy-keyed like static imports.
     file: 'js/engine.js',
     replacements: [
       ["new URL('./worker.js', import.meta.url)", `new URL('./worker.js?v=${stamp}', import.meta.url)`],
