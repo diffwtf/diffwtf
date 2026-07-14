@@ -47,7 +47,14 @@
 //      through untouched (verified 2026-07-14, CI run 12 postmortem);
 //   7. with --expect-stamp <stamp>: the served HTML references
 //      js/app.js?v=<stamp>, proving the deploy that just ran is what the
-//      target actually serves.
+//      target actually serves;
+//   8. the static pages (/privacy.html, /benchmarks.html) answer 200 as
+//      text/html and load in the browser with zero page or console errors;
+//   9. with --compare-origin <url> (the post-promote run passes the
+//      pages.dev production deployment): each static page's body through
+//      the zone is byte-identical to the same path on that origin — the
+//      tested-bytes-equals-served-bytes invariant. Any zone mutation of
+//      the body fails here, naming the first differing byte offset.
 //
 // Remote targets get a bounded retry of the WHOLE attempt (fetch, graph,
 // and browser checks) so edge propagation right after a deploy is absorbed
@@ -55,7 +62,7 @@
 // inside the window still fails. Local (--serve) targets run once.
 //
 // Usage:
-//   node scripts/smoke-live.mjs https://diff.wtf [--expect-stamp abc12345]
+//   node scripts/smoke-live.mjs https://diff.wtf [--expect-stamp abc12345] [--compare-origin https://diffwtf.pages.dev]
 //   node scripts/smoke-live.mjs --serve web [--expect-stamp abc12345]
 //
 // Requires Playwright with Chromium. If `import('playwright')` cannot
@@ -87,6 +94,7 @@ const MIME = {
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
 };
 
 function serve(root) {
@@ -109,10 +117,12 @@ function serve(root) {
 const args = process.argv.slice(2);
 let serveDir = null;
 let expectStamp = null;
+let compareOrigin = null;
 let url = null;
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--serve') serveDir = args[++i];
   else if (args[i] === '--expect-stamp') expectStamp = args[++i];
+  else if (args[i] === '--compare-origin') compareOrigin = args[++i].replace(/\/$/, '');
   else url = args[i];
 }
 let server = null;
@@ -140,7 +150,8 @@ if (serveDir) {
 // sources are not; the scan must handle both.
 const REF_RE = /(?:from\s*|import\s*\(\s*|new\s+(?:URL|Worker)\s*\(\s*)['"]([^'"]+)['"]/g;
 const HTML_REF_RE = /(?:src|href)="([^"]+)"/g;
-const SCAN_EXT = /\.(?:m?js|wasm|css|svg|ico|png)$/;
+const CSS_REF_RE = /url\(\s*['"]?([^'")]+)['"]?\s*\)/g;
+const SCAN_EXT = /\.(?:m?js|wasm|css|svg|ico|png|woff2)$/;
 const EXPECT_MIME = [
   [/\.m?js$/, /javascript/],
   [/\.wasm$/, /wasm/],
@@ -148,12 +159,16 @@ const EXPECT_MIME = [
   [/\.svg$/, /image\/svg\+xml/],
   [/\.ico$/, /image\/(?:x-icon|vnd\.microsoft\.icon)/],
   [/\.png$/, /image\/png/],
+  [/\.woff2$/, /font\/woff2/],
 ];
 // The scan is only trustworthy if it still reaches the engine's moving
-// parts; if a refactor renames or hides these, fail the scan itself.
+// parts; if a refactor renames or hides these, fail the scan itself. The
+// self-hosted font files are load-bearing the same way: a deploy that
+// loses them degrades silently to system fonts.
 const MUST_REACH = [
   '/js/app.js', '/js/worker.js', '/pkg/diffwtf_wasm.js', '/pkg/diffwtf_wasm_bg.wasm',
   '/favicon.svg', '/favicon.ico', '/apple-touch-icon.png',
+  '/css/fonts.css', '/fonts/space-grotesk-v22-latin.woff2', '/fonts/jetbrains-mono-v24-latin.woff2',
 ];
 
 async function moduleGraphProblems() {
@@ -183,9 +198,9 @@ async function moduleGraphProblems() {
       problems.push(`${pathname}: served as ${type} (a hosting fallback is likely masking a missing file)`);
       continue;
     }
-    if (kind === 'wasm' || kind === 'css' || kind === 'image') continue;
+    if (kind === 'wasm' || kind === 'image' || kind === 'font') continue;
     const text = await res.text();
-    const re = kind === 'html' ? HTML_REF_RE : REF_RE;
+    const re = kind === 'html' ? HTML_REF_RE : kind === 'css' ? CSS_REF_RE : REF_RE;
     for (const match of text.matchAll(re)) {
       let ref;
       try {
@@ -197,7 +212,7 @@ async function moduleGraphProblems() {
       const ext = ref.pathname.match(SCAN_EXT)[0];
       queue.push({
         href: ref.href,
-        kind: ext === '.css' ? 'css' : ext === '.wasm' ? 'wasm' : /\.(?:svg|ico|png)$/.test(ext) ? 'image' : 'js',
+        kind: ext === '.css' ? 'css' : ext === '.wasm' ? 'wasm' : ext === '.woff2' ? 'font' : /\.(?:svg|ico|png)$/.test(ext) ? 'image' : 'js',
       });
     }
   }
@@ -212,6 +227,8 @@ async function moduleGraphProblems() {
 // ---------------------------------------------------------------------------
 // One full attempt: fetch checks, module graph, browser checks
 // ---------------------------------------------------------------------------
+
+const STATIC_PAGES = ['/privacy.html', '/benchmarks.html'];
 
 async function runAttempt(browser) {
   const lines = []; // [ok, label, detail]
@@ -237,9 +254,63 @@ async function runAttempt(browser) {
   const graph = await moduleGraphProblems();
   push(
     graph.problems.length === 0,
-    'asset graph: every script, wasm, stylesheet, and icon serves with a sane MIME type',
+    'asset graph: every script, wasm, stylesheet, font, and icon serves with a sane MIME type',
     graph.problems.length ? graph.problems.slice(0, 4).join(' | ') : `${graph.scanned} files scanned from index.html`,
   );
+
+  // 8 + 9. Static pages serve as HTML, load without errors, and (with
+  // --compare-origin) arrive through the zone byte-identical to the same
+  // path on the origin deployment: tested bytes are served bytes.
+  for (const path of STATIC_PAGES) {
+    let body = null;
+    try {
+      const res = await fetch(`${base}${path}`, { redirect: 'follow' });
+      const type = res.headers.get('content-type') ?? '(none)';
+      body = new Uint8Array(await res.arrayBuffer());
+      push(
+        res.status === 200 && /html/.test(type),
+        `${path} answers 200 as HTML`,
+        `HTTP ${res.status}, content-type: ${type}`,
+      );
+    } catch (err) {
+      push(false, `${path} answers 200 as HTML`, String(err));
+    }
+    if (compareOrigin && body) {
+      try {
+        const res = await fetch(`${compareOrigin}${path}`, { redirect: 'follow' });
+        const other = new Uint8Array(await res.arrayBuffer());
+        const n = Math.min(body.length, other.length);
+        let diff = -1;
+        for (let i = 0; i < n; i++) {
+          if (body[i] !== other[i]) { diff = i; break; }
+        }
+        if (diff === -1 && body.length !== other.length) diff = n;
+        push(
+          res.ok && diff === -1,
+          `${path} is byte-identical to ${compareOrigin}${path}`,
+          diff === -1
+            ? `${body.length} bytes match`
+            : `bodies FIRST DIFFER AT BYTE OFFSET ${diff} (zone ${body.length} B, origin ${other.length} B): the zone is mutating served bytes`,
+        );
+      } catch (err) {
+        push(false, `${path} is byte-identical to ${compareOrigin}${path}`, String(err));
+      }
+    }
+    const staticPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const staticErrors = [];
+    staticPage.on('pageerror', (err) => staticErrors.push(`pageerror: ${err}`));
+    staticPage.on('console', (msg) => {
+      if (msg.type() === 'error') staticErrors.push(`console: ${msg.text()}`);
+    });
+    try {
+      await staticPage.goto(`${base}${path}`, { waitUntil: 'load', timeout: 30000 });
+      push(staticErrors.length === 0, `${path} loads with no page or console errors`, staticErrors.join(' | ').slice(0, 500));
+    } catch (err) {
+      push(false, `${path} loads with no page or console errors`, String(err).slice(0, 300));
+    } finally {
+      await staticPage.close();
+    }
+  }
 
   // 2 to 5. Browser checks on a fresh page.
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
