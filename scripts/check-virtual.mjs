@@ -48,6 +48,7 @@ const MIME = {
   '.wasm': 'application/wasm',
   '.txt': 'text/plain; charset=utf-8',
   '.png': 'image/png',
+  '.woff2': 'font/woff2',
 };
 
 function serve(root) {
@@ -94,9 +95,7 @@ page.on('console', (msg) => {
 const offOrigin = [];
 page.on('request', (req) => {
   const url = new URL(req.url());
-  const sameOrigin = url.origin === base;
-  const fonts = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
-  if (!sameOrigin && !fonts) offOrigin.push(req.url());
+  if (url.origin !== base) offOrigin.push(req.url());
 });
 
 // Waits for the perf badge to show a fresh routed timing.
@@ -507,7 +506,7 @@ try {
   // ---- 5. privacy and page health -----------------------------------------
   check(
     offOrigin.length === 0,
-    'no request left the origin (fonts aside) during any check',
+    'no request left the origin during any check',
     offOrigin.slice(0, 3).join(' | '),
   );
   check(pageErrors.length === 0, 'no page or console errors', pageErrors.join(' | ').slice(0, 500));

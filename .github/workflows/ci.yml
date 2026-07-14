@@ -96,9 +96,16 @@ jobs:
 
       # M11 gate: the benchmarks page renders, its charts carry accessible
       # names and table fallbacks, the home page links to it, and neither
-      # page makes an off-origin request (fonts aside).
+      # page makes any off-origin request.
       - name: Benchmarks page render check (Playwright)
         run: node scripts/check-bench-page.mjs --serve web
+
+      # Third-party regression gate: fonts are self-hosted, so the set of
+      # request hostnames on / and /privacy.html must be exactly the serving
+      # host, the design fonts must apply, and both families must actually
+      # load from the committed files.
+      - name: Third-party and font checks (Playwright)
+        run: node scripts/check-third-party.mjs --serve web
 
       # The deploy job ships exactly these bytes; web/pkg is gitignored, so
       # the artifact is the only way the tested build reaches the deploy.
@@ -224,7 +231,10 @@ jobs:
       # assert the module graph, the engine and its worker, a rendered diff,
       # no errors, the HTML cache policy, and this exact deploy's stamp. The
       # smoke retries through the edge propagation window (the 2026-07-14
-      # failure mode) before declaring the deploy dead.
+      # failure mode) before declaring the deploy dead. --compare-origin
+      # additionally asserts the zone serves the static pages byte-identical
+      # to the pages.dev production deployment: if any zone feature mutates
+      # the body, the smoke fails naming the first differing byte offset.
       - name: Post-deploy smoke (live URL)
         if: steps.cf.outputs.configured == 'true'
-        run: node scripts/smoke-live.mjs https://diff.wtf --expect-stamp "${GITHUB_SHA:0:8}"
+        run: node scripts/smoke-live.mjs https://diff.wtf --expect-stamp "${GITHUB_SHA:0:8}" --compare-origin https://diffwtf.pages.dev

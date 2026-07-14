@@ -10,8 +10,8 @@
 //      has a data table fallback with rows;
 //   3. the home page links to the benchmarks page (nav and chart caption)
 //      and the link navigates;
-//   4. the benchmarks page makes no request beyond its own origin and the
-//      design's Google Fonts (same privacy bar as the tool page);
+//   4. the benchmarks page makes no request beyond its own origin (fonts
+//      are self-hosted; same privacy bar as the tool page);
 //   5. the home "Why it's fast" chart card renders its generated bars and
 //      caption links.
 //
@@ -40,6 +40,7 @@ const MIME = {
   '.css': 'text/css',
   '.wasm': 'application/wasm',
   '.png': 'image/png',
+  '.woff2': 'font/woff2',
 };
 
 function serve(root) {
@@ -86,8 +87,7 @@ page.on('console', (msg) => {
 const offOrigin = [];
 page.on('request', (req) => {
   const u = new URL(req.url());
-  const fonts = u.hostname === 'fonts.googleapis.com' || u.hostname === 'fonts.gstatic.com';
-  if (u.origin !== base && !fonts) offOrigin.push(req.url());
+  if (u.origin !== base) offOrigin.push(req.url());
 });
 
 try {
@@ -163,7 +163,7 @@ try {
   );
 
   // ---- privacy and page health --------------------------------------------
-  check(offOrigin.length === 0, 'no request left the origin (fonts aside)', offOrigin.slice(0, 3).join(' | '));
+  check(offOrigin.length === 0, 'no request left the origin', offOrigin.slice(0, 3).join(' | '));
   // The home page load starts the engine; ignore nothing, a broken pkg is a
   // real failure the other checks also catch.
   check(pageErrors.length === 0, 'no page or console errors', pageErrors.join(' | ').slice(0, 500));
