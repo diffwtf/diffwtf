@@ -17,6 +17,7 @@ env:
   # same toolchain everywhere: CI, deploy, and local builds should match.
   WASM_PACK_VERSION: v0.15.0
   PLAYWRIGHT_VERSION: '1.61'
+  TERSER_VERSION: '5.49.0'
 
 jobs:
   ci:

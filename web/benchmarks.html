@@ -16,6 +16,9 @@
 <meta name="twitter:title" content="Benchmarks · diff.wtf">
 <meta name="twitter:description" content="Real, reproducible benchmarks: wins, losses, and methodology, generated from committed benchmark output.">
 <meta name="twitter:image" content="https://diff.wtf/og-card.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site.css">
@@ -32,11 +35,11 @@
 <!-- bench:gen bench-meta -->
   <p class="bench-updated">committed run: node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 6353c28 · <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a></p>
 <!-- bench:endgen bench-meta -->
-  <p>Every number and chart on this page is generated from the committed output of a reproducible benchmark, run on the same engine build the site ships. That includes the cases where this engine loses; they are labeled exactly like the wins. The comparison baseline throughout is the repo's own JS reference implementation, a faithful stand-in for a pure-JS diff tool with this feature set, running in the same process. A checked-in script regenerates this page from the benchmark artifacts, and CI fails if the two ever diverge, so a number you read here cannot silently go stale.</p>
+  <p>Every number and chart on this page is generated from committed benchmark output using the same WebAssembly engine module as the site. That includes the cases where this engine loses; they are labeled exactly like the wins. The baseline is the repository's own JS reference implementation, not a survey of competing diff products. A checked-in script regenerates the page from the artifacts, and CI verifies that the displayed values match them.</p>
 
   <h2>How it scales</h2>
 <!-- bench:gen bench-scaling -->
-  <p>The size-scaling family is the same content shape at growing sizes: line-based text with a bounded zone of edits, the shape diff tools see most. Per case, the chart shows the median of the JS reference total against the wasm pipeline total (compute call plus full view assembly, the js-comparable number). The wasm pipeline overtakes the JS reference between tiny-snippet (360 chars, 0.73x) and small-10kb (10,389 chars, 1.48x), so the crossover sits just under 10 KB: below it the JS reference is the faster tool for this shape, above it the wasm total stays at or ahead of the reference on every case in the family, from 1.01x (large-1mb-sparse, near parity) to 7.51x (mid-40kb). The ratio is content-dependent, not size-monotonic; the full matrix below has the exceptions.</p>
+  <p>The size-scaling family uses the same line-based content shape at growing sizes, with edits concentrated in a bounded zone. Per case, the chart shows the median of the JS reference total against the wasm pipeline total (compute call plus full view assembly, the JS-comparable number). For this family, the measured crossover is bracketed between tiny-snippet (360 chars, 0.73x) and small-10kb (10,389 chars, 1.48x). Above that measured bracket, the wasm total stays at or ahead of the reference on every case in the family, from 1.01x (large-1mb-sparse, near parity) to 7.51x (mid-40kb). The ratio is content-dependent, not size-monotonic; the full matrix below has the exceptions.</p>
   <div class="bench-card">
     <svg class="bench-svg" viewBox="0 0 720 380" role="img" aria-labelledby="scaling-title scaling-desc">
     <title id="scaling-title">Median diff time by input size: JS reference vs wasm pipeline</title>
@@ -107,12 +110,12 @@
       </tbody>
     </table>
   </div>
-  <p class="bench-note">The M10 page path column is what the live site actually does per keystroke since M10: compute call plus lazy row model plus one 60-row render window; the virtualized page never materializes every row. It is shown for honesty about what you experience on the site, but the headline ratio deliberately uses the full-assembly total, where both sides do the same work.</p>
+  <p class="bench-note">The M10 page-path column models compute plus lazy row-model construction and one 60-row render window. It excludes the worker round trip used by the current site for larger inputs, so it is a pipeline breakdown rather than a live per-keystroke measurement. The comparison ratio uses the full-assembly total, where both sides do the same work.</p>
 <!-- bench:endgen bench-scaling -->
 
   <h2>Where it loses</h2>
 <!-- bench:gen bench-losses -->
-  <p>The same benchmark run contains every case where the wasm pipeline is not the right tool, measured with the identical methodology as the wins:</p>
+  <p>The same benchmark run includes these cases where the wasm pipeline is slower or not directly comparable, measured with the same methodology as the wins:</p>
   <ul>
     <li><strong>Tiny inputs.</strong> On the &quot;Load example&quot; pair every visitor sees (343 + 360 chars), the JS reference wins: 0.044 ms against 0.061 ms for the wasm pipeline (0.73x). Below the crossover the wasm boundary floor costs more than the diff itself.</li>
     <li><strong>Complete rewrites.</strong> The complete-rewrite case is 3,000 vs 3,000 lines with nothing in common: both engines take their documented degradation path (reference LCS bailout, engine depth cap) and emit the same del-all/ins-all diff. The wasm side is slower: 20.95 ms against 6.50 ms (0.31x, about a third of the JS speed). Tracked openly as <a href="https://github.com/diffwtf/diffwtf/issues/12">issue #12</a>.</li>
@@ -306,13 +309,13 @@
 
   <h2>Engine size</h2>
 <!-- bench:gen bench-size -->
-  <p>The engine ships as a <span id="wasm-size" data-bytes="45673">45.7 KB</span> WebAssembly binary (measured from the built <code>web/pkg/diffwtf_wasm_bg.wasm</code>), plus a few KB of JS glue. The whole site is a handful of static files: no framework, no bundler, no server round trips.</p>
+  <p>The engine ships as a <span id="wasm-size" data-bytes="45673">45.7 KB</span> WebAssembly binary (measured from the built <code>web/pkg/diffwtf_wasm_bg.wasm</code>) plus generated JS glue. The site uses static HTML, CSS, and vanilla-JS modules; diff computation requires no server round trip.</p>
 <!-- bench:endgen bench-size -->
 
   <h2>Methodology</h2>
 <!-- bench:gen bench-methodology -->
-  <p>Every number on this page is parsed out of the committed benchmark artifacts by <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/gen-bench-page.mjs">scripts/gen-bench-page.mjs</a>, which regenerates this page and the home page chart; CI fails if the pages and the artifacts diverge. Nothing here is hand-typed.</p>
-  <p>Main run (<a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a>): node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 6353c28. Reported values are medians, 10 warmup runs per pipeline (huge cases override per bench-cases.mjs), word granularity, interleaved. Both pipelines run in the same Node process (V8, the engine Chrome uses) on byte-identical modules to what the site ships; the browser table above repeats the core cases in headless Chromium to confirm the relative numbers carry over. Inputs are committed fixtures or deterministic seeded generators (<a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-cases.mjs">scripts/bench-cases.mjs</a>), reproducible from any checkout; the per-case descriptions in the tables above are the generators' own notes. Sanity checks run before timing: both pipelines must agree on added and removed counts (except the disclosed large-1mb-spread divergence), and assembled output must reconstruct both inputs byte for byte.</p>
+  <p>Every displayed benchmark value is parsed out of the committed artifacts by <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/gen-bench-page.mjs">scripts/gen-bench-page.mjs</a>, which regenerates this page and the home page chart; CI fails if the pages and artifacts diverge.</p>
+  <p>Main run (<a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.results.txt">scripts/bench-vs-js.results.txt</a>): node v24.18.0 · AMD Ryzen 9 5900X 12-Core Processor · commit 6353c28. Reported values are medians, 10 warmup runs per pipeline (huge cases override per bench-cases.mjs), word granularity, interleaved. The baseline is this repository's JS reference implementation: useful for comparing equivalent project pipelines, but not a benchmark of competing diff products. Both pipelines run in the same Node process (V8, the engine Chrome uses) with the same wasm engine module the site ships; the surrounding production dispatch and rendering path is described separately. Inputs are committed fixtures or deterministic seeded generators (<a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-cases.mjs">scripts/bench-cases.mjs</a>), reproducible from any checkout; the per-case descriptions in the tables above are the generators' own notes. Sanity checks run before timing: both pipelines must agree on added and removed counts (except the disclosed large-1mb-spread divergence), and assembled output must reconstruct both inputs byte for byte.</p>
   <p>Fairness notes, disclosed: the sparse-edit generators keep edits inside a bounded zone so both engines produce the identical minimal diff (same work, same output); the spread and rewrite cases deliberately step outside that and are labeled with what changes. The identical-input fast path is a product shortcut and never backs an engine-speed claim. The Node runner is not a browser page; the browser run exists to check that the story holds there.</p>
   <p>Reproduce it: <code>./scripts/build-wasm.sh</code> then <code>node scripts/bench-vs-js.mjs</code> (and <code>node scripts/bench-browser.mjs</code> for the Chromium run), from <a href="https://github.com/diffwtf/diffwtf">the repo</a>. The committed results files are regenerated by piping stdout there and committing the diff, so the artifact history is reviewable like any other code.</p>
 <!-- bench:endgen bench-methodology -->

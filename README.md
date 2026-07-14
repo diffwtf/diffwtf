@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/diffwtf/diffwtf/actions/workflows/ci.yml/badge.svg)](https://github.com/diffwtf/diffwtf/actions/workflows/ci.yml)
 
-**The fastest diff on the web.** A client-side text/file diff checker — Rust → WebAssembly,
-runs entirely in your browser, nothing is ever uploaded.
+**Fast, private diffs in your browser.** A client-side text/file diff checker powered by
+Rust → WebAssembly. Your comparison text is never uploaded.
 
 ## What's in this repo
 
@@ -55,7 +55,7 @@ static files. The numbers on the site come from a committed, reproducible benchm
 
 ## Privacy
 
-Everything runs locally in your tab. No uploads, no servers, no logs. See
+Your comparison text is processed locally in your tab and never uploaded. See
 [diff.wtf/privacy](https://diff.wtf/privacy.html).
 
 ## Contributing

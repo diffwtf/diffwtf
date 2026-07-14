@@ -9,8 +9,11 @@
      Pages return a real 404 for missing assets instead of the SPA fallback
      (index.html with status 200). Without it, a missing or not yet
      propagated module script is served as text/html and the engine dies
-     with a MIME error instead of a visible 404 (2026-07-14 M10 deploy
-     incident, DECISIONS.md D7). Do not delete. -->
+      with a MIME error instead of a visible 404 (2026-07-14 M10 deploy
+      incident, DECISIONS.md D7). Do not delete. -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/site.css">
