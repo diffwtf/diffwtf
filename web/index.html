@@ -109,17 +109,17 @@
            verified by CI; edit the artifacts and regenerate, never the
            numbers (issue #11). -->
 <!-- bench:gen home-chart -->
-      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. In the committed Node benchmark, the engine call plus full view assembly for a 5,000-line file takes about 1.5 ms.</p>
+      <p class="chart-intro">Myers diff implemented in Rust, compiled to WebAssembly. On an everyday diff it runs about even with <a href="https://github.com/kpdecker/jsdiff">jsdiff</a>, the standard JavaScript library — both finish a 5,000-line file in under two milliseconds. The payoff is the worst case: jsdiff's time climbs with the number of edits, while this engine's is capped.</p>
       <div class="chart">
         <div class="chart-bar">
-          <div class="chart-labels"><span>code snippet (the example)</span><span class="accent">0.061 ms</span></div>
-          <div class="chart-track"><div class="chart-fill" style="width: 4%"></div></div>
+          <div class="chart-labels"><span>5,000-line file · this engine</span><span class="accent">1.52 ms</span></div>
+          <div class="chart-track"><div class="chart-fill" style="width: 82%"></div></div>
         </div>
         <div class="chart-bar">
-          <div class="chart-labels"><span>5,000-line file (150 KB)</span><span class="accent">1.51 ms</span></div>
-          <div class="chart-track"><div class="chart-fill" style="width: 100%"></div></div>
+          <div class="chart-labels"><span>5,000-line file · jsdiff</span><span>1.85 ms</span></div>
+          <div class="chart-track"><div class="chart-fill" style="width: 100%; background: #e3b341"></div></div>
         </div>
-        <span class="chart-caption">medians of 50 runs on committed fixtures: <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.mjs">scripts/bench-vs-js.mjs</a> · <a href="benchmarks.html">all benchmarks</a></span>
+        <span class="chart-caption">near parity on a typical diff; on a 3,000-line rewrite jsdiff takes 1.15 s and this engine 22 ms. medians on committed fixtures: <a href="https://github.com/diffwtf/diffwtf/blob/main/scripts/bench-vs-js.mjs">scripts/bench-vs-js.mjs</a> · <a href="benchmarks.html">all benchmarks</a></span>
       </div>
 <!-- bench:endgen home-chart -->
     </div>

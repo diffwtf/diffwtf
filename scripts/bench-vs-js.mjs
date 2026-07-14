@@ -9,11 +9,24 @@
 // same end state (renderable Split and Unified rows) from two strings:
 //
 //   js:   reference/refdiff.mjs compute(), the repo's dependency-free port
-//         of the design prototype's diff (a faithful stand-in for a pure-JS
-//         diff tool of this feature set). It is single-pass: line diff,
-//         intra-line refinement, and view materialization happen in one
-//         call, so only its total is reportable; it has no boundary and no
-//         separate assembly phase.
+//         of the design prototype's diff. Kept as the in-repo pipeline
+//         comparison and the conformance reference; it is single-pass (line
+//         diff, intra-line refinement, and view materialization in one call),
+//         so only its total is reportable, with no boundary and no separate
+//         assembly phase. Its naive LCS bailout is why it degrades on the
+//         spread and rewrite cases where jsdiff (real Myers) does not.
+//   jsdiff: the industry-standard npm `diff` package (pinned in package.json,
+//         dev-only, never shipped to web/), added as a second baseline so the
+//         engine is measured against a real competitor and not only the
+//         in-repo reference (issue #29). Line mode is diffLines (Myers line
+//         structure); minified-json uses diffWords, because its single line
+//         makes diffLines a non-comparison against the engine's intra-line
+//         refinement (bench-cases.mjs jsdiffMode). The reported total includes
+//         materializing every line into rows, matching what the js and wasm
+//         totals include. jsdiff agrees with the engine on line counts on
+//         every case (asserted), and produces the same output on complete
+//         rewrites; on maximally ambiguous input (adversarial-repeats) it
+//         picks a different but equally minimal shape, noted on the page.
 //   wasm: the shipped engine modules run in-process: web/pkg compute()
 //         returning the sparse v2 result (run-length ops plus highlight
 //         ranges), then the two ways the repo turns ops into renderable
@@ -92,6 +105,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 
+import * as JsDiff from 'diff';
+import { createRequire } from 'node:module';
+
 import { compute as jsCompute } from '../reference/refdiff.mjs';
 import { assembleDiffResult } from '../web/js/assemble.js';
 import { createRowModel } from '../web/js/rowmodel.js';
@@ -99,6 +115,7 @@ import { CASES } from './bench-cases.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const WARMUP = 10;
+const JSDIFF_VERSION = createRequire(import.meta.url)('diff/package.json').version;
 
 function median(times) {
   const sorted = [...times].sort((a, b) => a - b);
@@ -129,6 +146,65 @@ function assertReconstructs(assembled, left, right, label) {
   if (gotRight !== right) throw new Error(`${label}: right does not reconstruct from the wasm pipeline`);
 }
 
+// The jsdiff pipeline: the industry-standard `diff` package as a second
+// baseline alongside refdiff (issue #29). Line mode (diffLines, Myers) for
+// structural line diffs; word mode (diffWords) only where the line granularity
+// is not a like-for-like against the engine's intra-line refinement (one huge
+// line, e.g. minified-json). Returns { parts, materialize } so the timed
+// pipeline can charge for building a renderable view, matching what the js
+// (refdiff, compute incl. views) and wasm (compute + assembly) totals include.
+function jsdiffOf(left, right, mode) {
+  return mode === 'words' ? JsDiff.diffWords(left, right) : JsDiff.diffLines(left, right);
+}
+
+// Materialize jsdiff change parts into renderable rows, the equivalent of what
+// assembleDiffResult builds for the wasm side and what refdiff builds inline:
+// every line of both views as a row object. This must be a FAIR view step, not
+// extra work — an earlier version rescanned every character to count lines,
+// which charged jsdiff ~2 ms of scanning that neither other pipeline does and
+// inflated the engine's win; building the rows from the parts is what a real
+// jsdiff-backed renderer does and costs about what assembleDiffResult costs.
+// In word mode (one huge line) the parts are already the row's word segments.
+function jsdiffMaterialize(parts, mode) {
+  if (mode === 'words') {
+    return parts.map((p) => ({ text: p.value, added: Boolean(p.added), removed: Boolean(p.removed) }));
+  }
+  const rows = [];
+  for (const p of parts) {
+    const kind = p.added ? 'insert' : p.removed ? 'delete' : 'equal';
+    const lines = p.value.split('\n');
+    // A trailing newline yields a final '' (the separator, not a line); the
+    // final part of the file may legitimately omit the newline.
+    const end = lines.length && lines[lines.length - 1] === '' ? lines.length - 1 : lines.length;
+    for (let i = 0; i < end; i++) rows.push({ kind, text: lines[i] });
+  }
+  return rows;
+}
+
+// Added/removed LINE counts from a line-mode jsdiff result, for the sanity
+// check that jsdiff and the engine agree on structure. jsdiff is real Myers,
+// so unlike refdiff it does NOT degrade on large-1mb-spread: it agrees with
+// the engine on every case, which is asserted (no countsMayDiffer exemption).
+function jsdiffLineCounts(parts) {
+  let added = 0, removed = 0;
+  for (const p of parts) {
+    if (!p.added && !p.removed) continue;
+    let n = 0;
+    for (let i = 0; i < p.value.length; i++) if (p.value.charCodeAt(i) === 10) n++;
+    if (p.value.length && p.value.charCodeAt(p.value.length - 1) !== 10) n++;
+    if (p.added) added += n; else removed += n;
+  }
+  return { added, removed };
+}
+
+// A line-mode jsdiff result must reconstruct both inputs, like the engine's.
+function jsdiffReconstructs(parts, left, right) {
+  const side = (keep) => parts.filter((p) => keep(p)).map((p) => p.value).join('');
+  const gotLeft = side((p) => !p.added);
+  const gotRight = side((p) => !p.removed);
+  return gotLeft === left && gotRight === right;
+}
+
 const initWasm = (await import(join(ROOT, 'web/pkg/diffwtf_wasm.js'))).default;
 const { compute: wasmCompute, compute_probe: wasmProbe } = await import(
   join(ROOT, 'web/pkg/diffwtf_wasm.js')
@@ -141,9 +217,10 @@ try {
 } catch {
   /* fine outside a git checkout */
 }
-console.log('# diff.wtf benchmark: JS reference vs shipped wasm pipeline (sparse v2 boundary)');
-console.log(`# node ${process.version} · ${cpus()[0]?.model ?? 'unknown CPU'} · commit ${commit}`);
+console.log('# diff.wtf benchmark: refdiff.mjs and jsdiff vs shipped wasm pipeline (sparse v2 boundary)');
+console.log(`# node ${process.version} · ${cpus()[0]?.model ?? 'unknown CPU'} · commit ${commit} · jsdiff ${JSDIFF_VERSION}`);
 console.log(`# medians, ${WARMUP} warmup runs per pipeline (huge cases override per bench-cases.mjs), word granularity, interleaved`);
+console.log('# jsdiff is npm `diff` diffLines (line structure); minified-json uses diffWords (line mode is not a like-for-like there)');
 console.log('# phases and methodology: header comment of scripts/bench-vs-js.mjs');
 console.log('');
 
@@ -153,6 +230,8 @@ for (const c of CASES) {
   const { left, right } = loadCase(c);
   const iterations = c.iterations;
   const warmup = c.warmup ?? WARMUP;
+
+  const jsdiffMode = c.jsdiffMode ?? 'lines';
 
   // Sanity before timing.
   const jsResult = jsCompute(left, right, 'word');
@@ -167,6 +246,27 @@ for (const c of CASES) {
       `${c.name}: pipelines disagree ` +
         `(js +${jsResult.added}/-${jsResult.removed}, wasm +${wasmAssembled.added}/-${wasmAssembled.removed})`,
     );
+  }
+
+  // jsdiff sanity. It must reconstruct both inputs. In line mode it must also
+  // agree with the engine on added/removed line counts (jsdiff is real Myers,
+  // so it agrees even where refdiff degrades — no countsMayDiffer exemption).
+  // Ambiguous cases may pick a different-but-equally-minimal shape; the counts
+  // still match, which is what is asserted here.
+  const jsdiffParts = jsdiffOf(left, right, jsdiffMode);
+  // Two-sided reconstruction holds for both modes: dropping added parts must
+  // rebuild the left, dropping removed parts must rebuild the right.
+  if (!jsdiffReconstructs(jsdiffParts, left, right)) {
+    throw new Error(`${c.name}: jsdiff (${jsdiffMode} mode) does not reconstruct both inputs`);
+  }
+  if (jsdiffMode !== 'words') {
+    const jc = jsdiffLineCounts(jsdiffParts);
+    if (jc.added !== wasmAssembled.added || jc.removed !== wasmAssembled.removed) {
+      throw new Error(
+        `${c.name}: jsdiff and engine disagree on line counts ` +
+          `(jsdiff +${jc.added}/-${jc.removed}, wasm +${wasmAssembled.added}/-${wasmAssembled.removed})`,
+      );
+    }
   }
 
   const pipelines = {
@@ -202,14 +302,19 @@ for (const c of CASES) {
     probe: () => {
       sink += wasmProbe(left, right, 'word') & 1;
     },
+    jsdiff: () => {
+      const parts = jsdiffOf(left, right, jsdiffMode);
+      sink += jsdiffMaterialize(parts, jsdiffMode).length;
+    },
   };
 
   for (let i = 0; i < warmup; i++) {
     pipelines.js();
     pipelines.wasm();
     pipelines.probe();
+    pipelines.jsdiff();
   }
-  const times = { js: [], call: [], assemble: [], model: [], window: [], total: [], m10: [], probe: [] };
+  const times = { js: [], call: [], assemble: [], model: [], window: [], total: [], m10: [], probe: [], jsdiff: [] };
   for (let i = 0; i < iterations; i++) {
     let t0 = performance.now();
     pipelines.js();
@@ -226,6 +331,10 @@ for (const c of CASES) {
     t0 = performance.now();
     pipelines.probe();
     times.probe.push(performance.now() - t0);
+
+    t0 = performance.now();
+    pipelines.jsdiff();
+    times.jsdiff.push(performance.now() - t0);
   }
 
   const m = {
@@ -237,12 +346,14 @@ for (const c of CASES) {
     total: median(times.total),
     m10: median(times.m10),
     probe: median(times.probe),
+    jsdiff: median(times.jsdiff),
   };
   const marshal = m.call - m.probe;
   summary.push({
     name: c.name,
     size: Math.max(left.length, right.length),
     js: m.js,
+    jsdiff: m.jsdiff,
     total: m.total,
     m10: m.m10,
     identical: c.name === 'large-150kb-identical',
@@ -254,6 +365,7 @@ for (const c of CASES) {
     `  input: ${left.length.toLocaleString('en-US')} + ${right.length.toLocaleString('en-US')} chars, ${countsLine}, median of ${iterations}`,
   );
   console.log(`  js total (compute incl. views)   ${fmt(m.js)}`);
+  console.log(`  jsdiff total (incl. views)       ${fmt(m.jsdiff)}`);
   console.log(`  wasm engine (probe)              ${fmt(m.probe)}`);
   console.log(`  wasm compute call                ${fmt(m.call)}`);
   console.log(`  wasm result marshal (derived)    ${fmt(marshal)}`);
@@ -262,18 +374,31 @@ for (const c of CASES) {
   console.log(`  wasm 60-row window (M10)         ${fmt(m.window)}`);
   console.log(`  wasm total (call + assembly)     ${fmt(m.total)}`);
   console.log(`  wasm total (M10 page path)       ${fmt(m.m10)}`);
-  console.log(`  ratio (js total / wasm total)    ${(m.js / m.total).toFixed(2)}x`);
+  console.log(`  ratio (js total / wasm total)      ${(m.js / m.total).toFixed(2)}x`);
+  console.log(`  ratio (jsdiff total / wasm total)  ${(m.jsdiff / m.total).toFixed(2)}x`);
   console.log('');
 }
 
-console.log('# summary (medians; ratio = js total / wasm full total, both materialize');
+console.log('# summary (medians; ratio = baseline total / wasm full total, all materialize');
 console.log('# every row; the M10 column is the virtualized page path, call + model +');
-console.log('# one 60-row window, which no js-side equivalent exists for)');
+console.log('# one 60-row window, which no baseline-side equivalent exists for)');
 for (const s of summary) {
   const flag = s.identical ? '  [identical fast path, not an engine-speed number]' : '';
   console.log(
-    `# ${s.name}: js ${fmt(s.js)} vs wasm ${fmt(s.total)} -> ${(s.js / s.total).toFixed(2)}x · M10 page ${fmt(s.m10)}${flag}`,
+    `# ${s.name}: refdiff ${fmt(s.js)} (${(s.js / s.total).toFixed(2)}x) · jsdiff ${fmt(s.jsdiff)} (${(s.jsdiff / s.total).toFixed(2)}x) vs wasm ${fmt(s.total)} · M10 page ${fmt(s.m10)}${flag}`,
   );
+}
+// jsdiff is the industry-standard baseline; refdiff is the in-repo reference.
+// The jsdiff ratios are the honest engine-vs-competitor story: near parity on
+// typical diffs, dramatically ahead on the pathological tail (see the
+// complete-rewrite and adversarial-repeats rows), because jsdiff is O(ND) and
+// the engine caps its search depth (MAX_D). Excludes the identical fast path.
+{
+  const real = summary.filter((s) => !s.identical);
+  const parity = real.filter((s) => s.jsdiff / s.total >= 0.9 && s.jsdiff / s.total <= 1.25);
+  const tail = real.filter((s) => s.jsdiff / s.total > 1.25).sort((a, b) => b.jsdiff / b.total - a.jsdiff / a.total);
+  console.log(`# jsdiff parity band (0.90x-1.25x, typical diffs): ${parity.map((s) => s.name).join(', ') || 'none'}`);
+  console.log(`# jsdiff tail wins (>1.25x, pathological): ${tail.map((s) => `${s.name} ${(s.jsdiff / s.total).toFixed(2)}x`).join(', ') || 'none'}`);
 }
 
 // Crossover, computed ONLY over the size-scaling sparse-edit family (same
