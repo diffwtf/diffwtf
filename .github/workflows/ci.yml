@@ -26,6 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # web/ is deployed as-is with no site build. Keep every committed
+      # production module at pinned Terser output so future source edits
+      # cannot silently increase the shipped payload.
+      - name: Production JS is minified
+        run: ./scripts/minify-js.sh --check
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
