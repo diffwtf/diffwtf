@@ -85,6 +85,8 @@ const MIME = {
   '.wasm': 'application/wasm',
   '.txt': 'text/plain; charset=utf-8',
   '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
 };
 
 function serve(root) {
@@ -133,17 +135,26 @@ if (serveDir) {
 // ---------------------------------------------------------------------------
 
 // import ... from '...', import('...'), new URL('...'), new Worker('...').
+// The optional whitespace matters because the deployed artifact's modules
+// are minified (for example, `from"./engine.js"`), while the committed
+// sources are not; the scan must handle both.
 const REF_RE = /(?:from\s*|import\s*\(\s*|new\s+(?:URL|Worker)\s*\(\s*)['"]([^'"]+)['"]/g;
 const HTML_REF_RE = /(?:src|href)="([^"]+)"/g;
-const SCAN_EXT = /\.(?:m?js|wasm|css)$/;
+const SCAN_EXT = /\.(?:m?js|wasm|css|svg|ico|png)$/;
 const EXPECT_MIME = [
   [/\.m?js$/, /javascript/],
   [/\.wasm$/, /wasm/],
   [/\.css$/, /css/],
+  [/\.svg$/, /image\/svg\+xml/],
+  [/\.ico$/, /image\/(?:x-icon|vnd\.microsoft\.icon)/],
+  [/\.png$/, /image\/png/],
 ];
 // The scan is only trustworthy if it still reaches the engine's moving
 // parts; if a refactor renames or hides these, fail the scan itself.
-const MUST_REACH = ['/js/app.js', '/js/worker.js', '/pkg/diffwtf_wasm.js', '/pkg/diffwtf_wasm_bg.wasm'];
+const MUST_REACH = [
+  '/js/app.js', '/js/worker.js', '/pkg/diffwtf_wasm.js', '/pkg/diffwtf_wasm_bg.wasm',
+  '/favicon.svg', '/favicon.ico', '/apple-touch-icon.png',
+];
 
 async function moduleGraphProblems() {
   const origin = new URL(`${base}/`).origin;
@@ -172,7 +183,7 @@ async function moduleGraphProblems() {
       problems.push(`${pathname}: served as ${type} (a hosting fallback is likely masking a missing file)`);
       continue;
     }
-    if (kind === 'wasm' || kind === 'css') continue;
+    if (kind === 'wasm' || kind === 'css' || kind === 'image') continue;
     const text = await res.text();
     const re = kind === 'html' ? HTML_REF_RE : REF_RE;
     for (const match of text.matchAll(re)) {
@@ -184,7 +195,10 @@ async function moduleGraphProblems() {
       }
       if (ref.origin !== origin || !SCAN_EXT.test(ref.pathname)) continue;
       const ext = ref.pathname.match(SCAN_EXT)[0];
-      queue.push({ href: ref.href, kind: ext === '.css' ? 'css' : ext === '.wasm' ? 'wasm' : 'js' });
+      queue.push({
+        href: ref.href,
+        kind: ext === '.css' ? 'css' : ext === '.wasm' ? 'wasm' : /\.(?:svg|ico|png)$/.test(ext) ? 'image' : 'js',
+      });
     }
   }
   for (const path of MUST_REACH) {
@@ -223,7 +237,7 @@ async function runAttempt(browser) {
   const graph = await moduleGraphProblems();
   push(
     graph.problems.length === 0,
-    'module graph: every script, wasm, and stylesheet serves with a sane MIME type',
+    'asset graph: every script, wasm, stylesheet, and icon serves with a sane MIME type',
     graph.problems.length ? graph.problems.slice(0, 4).join(' | ') : `${graph.scanned} files scanned from index.html`,
   );
 

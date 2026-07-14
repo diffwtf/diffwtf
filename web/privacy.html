@@ -4,18 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy — diff.wtf</title>
-<meta name="description" content="diff.wtf runs entirely in your browser: no uploads, no servers, no logs.">
+<meta name="description" content="Your comparison text is processed locally in your browser and is never uploaded by diff.wtf.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://diff.wtf/privacy.html">
 <meta property="og:title" content="Privacy — diff.wtf">
-<meta property="og:description" content="diff.wtf runs entirely in your browser: no uploads, no servers, no logs.">
+<meta property="og:description" content="Your comparison text is processed locally in your browser and is never uploaded by diff.wtf.">
 <meta property="og:image" content="https://diff.wtf/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Privacy — diff.wtf">
-<meta name="twitter:description" content="diff.wtf runs entirely in your browser: no uploads, no servers, no logs.">
+<meta name="twitter:description" content="Your comparison text is processed locally in your browser and is never uploaded by diff.wtf.">
 <meta name="twitter:image" content="https://diff.wtf/og-card.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site.css">
@@ -32,13 +35,16 @@
   <p class="privacy-updated">Last updated: July 2026</p>
 
   <h2>Your text never leaves your browser</h2>
-  <p>diff.wtf runs entirely on your device. The text and files you compare are processed locally by a WebAssembly module — they are never uploaded, transmitted, stored, or logged. There is no server that could receive them. Closing the tab erases everything.</p>
+  <p>The text and files you compare are processed locally by a WebAssembly module. Their contents are not sent to diff.wtf or any third-party service. Your comparison text and generated diff remain in page memory only and are discarded when you close the tab.</p>
 
-  <h2>What we do collect</h2>
-  <p>Anonymous, aggregate page analytics (page views, country, browser) with no cookies and no personal identifiers. We never see the content you diff.</p>
+  <h2>Site data</h2>
+  <p>We do not run client-side analytics or set analytics cookies. Like any hosted website, our hosting and font providers may process ordinary request metadata such as your IP address, browser information, and requested page. Your diff content is not included in those requests.</p>
+
+  <h2>Local preferences</h2>
+  <p>We store your Split/Unified and Word/Character preferences in local browser storage. Your comparison text is not stored there.</p>
 
   <h2>Advertising</h2>
-  <p>The free version shows ads served by third-party networks (Google AdSense, Carbon Ads). These networks may use cookies for ad personalization as described in their own policies; they have no access to your diff content. You can opt out of personalized ads via <a href="https://adssettings.google.com">Google Ad Settings</a>.</p>
+  <p>diff.wtf does not currently display advertising, and no advertising code runs on the diff tool. We will update this policy before that changes.</p>
 
   <h2>Questions</h2>
   <p>Email <a href="mailto:privacy@diff.wtf">privacy@diff.wtf</a>, or read the source — the diff engine is <a href="https://github.com/diffwtf/diffwtf">open source</a>, so you don't have to take our word for any of this.</p>

@@ -17,6 +17,7 @@ env:
   # same toolchain everywhere: CI, deploy, and local builds should match.
   WASM_PACK_VERSION: v0.15.0
   PLAYWRIGHT_VERSION: '1.61'
+  TERSER_VERSION: '5.49.0'
 
 jobs:
   ci:
@@ -53,6 +54,14 @@ jobs:
 
       - name: wasm build
         run: ./scripts/build-wasm.sh
+
+      # The committed web/js modules stay readable source; only the artifact
+      # ships minified. Minifying this job's workspace copy here, before
+      # every JS conformance and browser gate, keeps the D7 rule intact: the
+      # exact minified bytes the deploy job ships are the bytes each gate
+      # below tested.
+      - name: Minify site JS (workspace copy, not committed)
+        run: ./scripts/minify-js.sh web
 
       # The JS half of the conformance suite: the built wasm boundary against
       # the ops fixtures, and the shipped view assembler against the
