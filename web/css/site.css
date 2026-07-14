@@ -346,10 +346,36 @@ a.wordmark:hover {
   color: #46515f;
 }
 
+/* Size guardrail notice (M10): large-input warning and cap message.
+   Existing tokens only; no new colors. */
+
+.size-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  background: #0d1218;
+  border: 1px solid #2d3a4c;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #8b98a9;
+}
+.size-notice[hidden] {
+  display: none;
+}
+
 /* Diff rows */
 
+/* position: relative anchors selection-pinned rows during virtualized
+   scrolling, and overflow-anchor keeps the browser's scroll anchoring from
+   fighting the window's own height corrections (M10, web/js/virtual.js). */
 .diff-body {
   padding: 6px 0;
+  position: relative;
+  overflow-anchor: none;
 }
 .diff-body[hidden] {
   display: none;

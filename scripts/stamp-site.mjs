@@ -38,10 +38,35 @@ const REWRITES = [
   {
     file: 'js/app.js',
     replacements: [
-      ["from '../pkg/diffwtf_wasm.js?v=m10'", `from '../pkg/diffwtf_wasm.js?v=${stamp}'`],
-      ["from './assemble.js'", `from './assemble.js?v=${stamp}'`],
+      ["from './engine.js'", `from './engine.js?v=${stamp}'`],
+      ["from './rowmodel.js'", `from './rowmodel.js?v=${stamp}'`],
       ["from './render.js'", `from './render.js?v=${stamp}'`],
+      ["from './virtual.js'", `from './virtual.js?v=${stamp}'`],
+      ["from './selection.js'", `from './selection.js?v=${stamp}'`],
       ["from './samples.js'", `from './samples.js?v=${stamp}'`],
+    ],
+  },
+  {
+    // The engine client spawns the worker and holds the main-thread
+    // fallback import; both URLs must be deploy-keyed like static imports.
+    file: 'js/engine.js',
+    replacements: [
+      ["new URL('./worker.js', import.meta.url)", `new URL('./worker.js?v=${stamp}', import.meta.url)`],
+      ["import('../pkg/diffwtf_wasm.js?v=m10')", `import('../pkg/diffwtf_wasm.js?v=${stamp}')`],
+    ],
+  },
+  {
+    file: 'js/worker.js',
+    replacements: [
+      ["from '../pkg/diffwtf_wasm.js?v=m10'", `from '../pkg/diffwtf_wasm.js?v=${stamp}'`],
+    ],
+  },
+  {
+    // Not on the page path since M10 (the page reads rowmodel.js directly)
+    // but still shipped and importable; keep its import graph deploy-keyed.
+    file: 'js/assemble.js',
+    replacements: [
+      ["from './rowmodel.js'", `from './rowmodel.js?v=${stamp}'`],
     ],
   },
 ];

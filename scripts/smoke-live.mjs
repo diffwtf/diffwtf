@@ -175,10 +175,21 @@ try {
     `badge reads ${JSON.stringify(await page.textContent('#perf-text'))}`,
   );
 
-  // 2. A diff renders end to end.
+  // 2. A diff renders end to end. Since M10 the compute runs in a worker,
+  // so the badge updates asynchronously after the input events; wait for
+  // it to leave the ready/computing states before asserting.
   if (engineReady) {
     await page.fill('#left-text', 'a\nb\nc');
     await page.fill('#right-text', 'a\nX\nc');
+    try {
+      await page.waitForFunction(
+        () => /^\d/.test(document.getElementById('perf-text')?.textContent ?? ''),
+        undefined,
+        { timeout: 10000 },
+      );
+    } catch {
+      /* the badge assertion below reports the actual state */
+    }
     const badge = await page.textContent('#perf-text');
     const added = await page.textContent('#stat-added');
     const rows = await page.evaluate(
