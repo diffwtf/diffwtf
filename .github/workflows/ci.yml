@@ -26,12 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # web/ is deployed as-is with no site build. Keep every committed
-      # production module at pinned Terser output so future source edits
-      # cannot silently increase the shipped payload.
-      - name: Production JS is minified
-        run: ./scripts/minify-js.sh --check
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -60,6 +54,14 @@ jobs:
 
       - name: wasm build
         run: ./scripts/build-wasm.sh
+
+      # The committed web/js modules stay readable source; only the artifact
+      # ships minified. Minifying this job's workspace copy here, before
+      # every JS conformance and browser gate, keeps the D7 rule intact: the
+      # exact minified bytes the deploy job ships are the bytes each gate
+      # below tested.
+      - name: Minify site JS (workspace copy, not committed)
+        run: ./scripts/minify-js.sh web
 
       # The JS half of the conformance suite: the built wasm boundary against
       # the ops fixtures, and the shipped view assembler against the

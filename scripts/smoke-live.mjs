@@ -135,8 +135,9 @@ if (serveDir) {
 // ---------------------------------------------------------------------------
 
 // import ... from '...', import('...'), new URL('...'), new Worker('...').
-// The optional whitespace matters because production modules are committed
-// minified (for example, `from"./engine.js"`).
+// The optional whitespace matters because the deployed artifact's modules
+// are minified (for example, `from"./engine.js"`), while the committed
+// sources are not; the scan must handle both.
 const REF_RE = /(?:from\s*|import\s*\(\s*|new\s+(?:URL|Worker)\s*\(\s*)['"]([^'"]+)['"]/g;
 const HTML_REF_RE = /(?:src|href)="([^"]+)"/g;
 const SCAN_EXT = /\.(?:m?js|wasm|css|svg|ico|png)$/;

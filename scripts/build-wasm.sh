@@ -32,8 +32,9 @@ sed -i "s|new URL('diffwtf_wasm_bg.wasm', import.meta.url)|new URL('diffwtf_wasm
 echo "stamped wasm URL in glue: diffwtf_wasm_bg.wasm?v=${hash}"
 
 # wasm-pack optimizes the binary in release mode but leaves readable JS glue.
-# The handwritten modules are committed minified; keep the generated module
-# consistent without introducing a site bundler or changing module boundaries.
+# The glue is generated output (web/pkg is gitignored), so minify it at build
+# time; the handwritten web/js modules stay readable in the repo and are
+# minified per deploy artifact by scripts/minify-js.sh instead.
 terser_version=${TERSER_VERSION:-5.49.0}
 npx --yes "terser@${terser_version}" "$glue" --compress --mangle --module --output "${glue}.min"
 mv "${glue}.min" "$glue"
