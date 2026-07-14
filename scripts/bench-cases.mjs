@@ -82,9 +82,11 @@ function minifiedJson(keys, editedKey) {
   return { left, right };
 }
 
-// Each case: { name, note, iterations } plus either
+// Each case: { name, note, iterations, warmup? } plus either
 //   fixture: { left, right } committed file paths (repo-relative), or
 //   build(): { left, right } strings, deterministic.
+// warmup overrides the runner's default unmeasured-run count for cases too
+// slow to warm up ten times.
 // countsMayDiffer marks the one case where the two engines legitimately
 // disagree on added/removed (the reference degrades, the engine does not);
 // ambiguous marks equally minimal but possibly different diffs. Everything
@@ -166,6 +168,30 @@ export const CASES = [
       return { left: left.join('\n') + '\n', right: right.join('\n') + '\n' };
     },
     iterations: 25,
+  },
+  {
+    name: 'huge-5mb-sparse',
+    sizeScaling: true,
+    note: '165,000 lines / ~5.4 MB, 89 edited lines in one zone (the M10 large-file target)',
+    warmup: 3,
+    build() {
+      const left = makeLines(165000, 'l', xorshift32(0x5abcde01));
+      const right = zoneEdit(left, 80000, 80600, 7, 3);
+      return { left: left.join('\n') + '\n', right: right.join('\n') + '\n' };
+    },
+    iterations: 7,
+  },
+  {
+    name: 'huge-13mb-sparse',
+    sizeScaling: true,
+    note: '400,000 lines / ~13 MB, 97 edited lines in one zone',
+    warmup: 2,
+    build() {
+      const left = makeLines(400000, 'l', xorshift32(0x12abcde0));
+      const right = zoneEdit(left, 200000, 200650, 7, 4);
+      return { left: left.join('\n') + '\n', right: right.join('\n') + '\n' };
+    },
+    iterations: 5,
   },
   {
     name: 'large-1mb-spread',

@@ -1,5 +1,87 @@
 # DECISIONS
 
+## D8: Worker compute and virtualized rendering (M10, pending Alex ratification)
+Goal (issue #16): a 5 MB and larger input must never hang the tab. Two
+structural changes ship together, both web-layer only; the engine, the M9
+sparse boundary contract, and the site design are untouched beyond the
+loading and warning states.
+
+Compute moves to a dedicated module worker (web/js/worker.js) that owns its
+own wasm instance, initialized from the same content-hash-stamped glue the
+page uses. The protocol is {type, id, payload}: diff requests down, ready /
+progress / result / error up. The client (web/js/engine.js) keeps at most
+one request in flight and at most one (the newest) waiting, and drops any
+reply whose id is no longer the newest request, so typing into a large file
+cannot queue a backlog and a stale result can never overwrite a newer
+render. Results cross the boundary with their typed arrays' buffers in the
+postMessage transfer list (zero copy); a buffer is transferred only when it
+is wholly owned by its array (anything else, for example a view into wasm
+memory, would neuter shared state and is structured-cloned instead), and a
+throwing transfer postMessage falls back to a plain clone. If module
+workers are unavailable or the worker errors before its ready signal, the
+client falls back to main-thread compute (the pre-M10 path) so old
+browsers keep working; if the worker reports that wasm init itself failed,
+no fallback is attempted, because the inline path would fail identically.
+The worker makes no network calls beyond loading its own glue and wasm
+(stated as an invariant in the file); scripts/check-virtual.mjs asserts
+that no request in a whole check run leaves the origin (Google Fonts
+aside, a pre-existing page dependency).
+
+Rendering virtualizes in both views (web/js/virtual.js), with the page
+(window) staying the only scroll source exactly as in the design: the diff
+body holds a top spacer, the rendered window, and a bottom spacer, so the
+scrollbar reflects the full row count while DOM nodes stay bounded
+(observed 34 to 65 split rows on a 165,000 row diff). Row heights use one
+estimate calibrated from the first rendered row, corrected by measured
+per-row deviations kept sparsely (per-chunk sums, O(edited rows) memory);
+each update runs read, write, measure, correct in that order with no
+interleaved layout reads, and scroll compensation is applied in-frame when
+rows above the viewport measure differently than estimated. Rows come from
+a lazy row model (web/js/rowmodel.js) built from the sparse ops in
+O(edits); web/js/assemble.js is now a thin materializing loop over that
+model, so the existing conformance suite pins the exact row construction
+the virtualized renderer uses. Split-view pane sync is structural (a split
+row is one grid element carrying both sides). The perf badge now times
+compute plus row model build; pre-M10 it timed compute plus full view
+assembly. Full assembly still exists and is benchmarked: on the 5.4 MB
+case it costs 50.8 ms against 7.5 ms for the model plus microseconds per
+60-row window (scripts/bench-vs-js.results.txt).
+
+Selection and copy across recycled rows: recycling a row that holds a
+selection endpoint (including a collapsed caret, the anchor of a future
+shift click) would collapse the selection, so such rows are pinned: same
+element, switched to absolute positioning at its virtual offset, with a
+same-height placeholder holding its flow slot while its index is inside
+the window; released when the selection ends. The copy event is
+intercepted when both endpoints are inside diff rows and the text is
+rebuilt from the row model over the true row range, with exact character
+offsets at the boundary rows: unified view copies each row's line text;
+split view copies one side when both endpoints are in the same side's
+cells, and falls back to whole rows (left line then right line) otherwise.
+Accepted limitations, deliberate: the painted selection across a recycled
+gap covers spacer pixels rather than rows; selections that start or end
+outside the diff body (select all included) keep the browser's default
+copy, which carries only the rendered window; the split-view mixed-side
+fallback copies whole boundary rows; and printing a virtualized diff
+prints the rendered window only.
+
+Guardrails (web/js/app.js): SOFT_WARN_CHARS = 8,000,000 per side shows a
+dismissible notice and computes anyway; HARD_CAP_CHARS = 64,000,000 per
+side refuses to compute with a visible message. Units are UTF-16 code
+units (String.length). The cap is a deliberate product bound derived from
+wasm32's 4 GB ceiling against worst-case UTF-8 expansion plus the engine's
+working set, not a measured cliff. Dismissal re-arms when the inputs
+change size class. Nothing is uploaded at any size.
+
+Known limits, documented rather than hidden: inputs beyond roughly 1.5
+million rows exceed Chromium's maximum element height (about 33.5 million
+px), so the scrollbar cannot reach the tail (scroll-space compression is
+the known follow-up if real inputs ever hit this); and the one remaining
+large-paste stall is the browser laying out the soft-wrapped input
+textareas themselves, measured at about 2.1 s for a 120k-line value,
+which predates M10, is independent of the diff path, and is tracked with
+options in issue #17.
+
 ## D7: Deploy caching and pipeline hardening (2026-07-13 incident hotfix)
 Incident: the M9 deploy broke the live site for every returning visitor
 inside a four-hour window. Root cause, confirmed by header probe and local

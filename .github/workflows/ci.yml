@@ -60,6 +60,18 @@ jobs:
       - name: JS conformance (wasm boundary + view assembly)
         run: node scripts/conformance-web.mjs
 
+      - name: Install Playwright (pinned)
+        run: |
+          npm install --no-save --no-package-lock "playwright@${PLAYWRIGHT_VERSION}"
+          npx playwright install --with-deps chromium
+
+      # M10 gate: worker responsiveness, virtualized scroll correctness,
+      # virtualized-vs-full render parity, and copy across recycled rows
+      # (scripts/check-virtual.mjs, issue #16), against the same build the
+      # deploy ships.
+      - name: Virtualization and worker checks (Playwright)
+        run: node scripts/check-virtual.mjs --serve web
+
       # The deploy job ships exactly these bytes; web/pkg is gitignored, so
       # the artifact is the only way the tested build reaches the deploy.
       - name: Upload site artifact for deploy
